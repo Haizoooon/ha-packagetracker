@@ -7,7 +7,7 @@ from typing import Final
 
 DOMAIN: Final = "package_tracker"
 NAME: Final = "Package Tracker"
-VERSION: Final = "1.0.2"
+VERSION: Final = "1.0.3"
 
 # ---------------------------------------------------------------------------
 # Configuration

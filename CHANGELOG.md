@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 – 2026-11-27
+
+- Added `CONFIG_SCHEMA` for hassfest compliance.
+- Removed redundant identical dark icon assets; Home Assistant falls back to the normal icon.
+- HACS validation now passes with repository description, topics and local brand assets.
+
 ## 1.0.2 – 2026-11-27
 
 - Fixed hassfest/HACS manifest key ordering.
