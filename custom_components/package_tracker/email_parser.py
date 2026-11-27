@@ -363,13 +363,22 @@ _ACTUAL_RETURN = re.compile(
 _NON_PACKAGE_SUBJECT = re.compile(
     r"(bewert|bewerte|bewertung|rezension|feedback|umfrage|meinung|erfahrung|"
     r"rechnung|invoice|zahlung|payment|gutschein|coupon|newsletter|angebot|"
-    r"rabatt|sale|black friday|cyber monday|deal|empfehlung|entdecke|"
-    r"jetzt kaufen|nur heute|werbung)",
+    r"rabatt|sale|black friday|cyber monday|prime day|deal|empfehlung|entdecke|"
+    r"jetzt kaufen|nur heute|werbung|shoppen|amazon haul|\bhaul\b|freshty|"
+    r"day shop|marken|prozent|\d+\s*%|ablageort|abstellort|wunschort|"
+    r"wunschtermin|zustelloption|lieferoption|sendungsoption|umleitung|buchen|"
+    r"kundenlieblinge|black week|angebote|sale|deals)",
     re.IGNORECASE,
 )
 _NON_PACKAGE_SENDER = re.compile(
     r"^(?:newsletter|marketing|angebote|deals|promo|werbung|bewertung|"
-    r"bewerten|review|reviews|feedback|rechnung|invoice|payment|zahlen)",
+    r"bewerten|review|reviews|feedback|rechnung|invoice|payment|zahlen|"
+    r"blackfriday|haul|freshty)",
+    re.IGNORECASE,
+)
+_PARCEL_SUBJECT_HINT = re.compile(
+    r"(sendung|paket|lieferung|zustellung|versand|retoure|"
+    r"delivery|shipment|parcel|tracking)",
     re.IGNORECASE,
 )
 
@@ -655,6 +664,33 @@ _PRODUCT_REJECT_RAW = {
 _PRODUCT_REJECT_KEYS: Final = frozenset(
     normalize_key(item) for item in _PRODUCT_REJECT_RAW
 )
+
+_MARKETING_PRODUCT_RE = re.compile(
+    r"(ablageort|abstellort|wunschort|wunschtermin|zustelloption|lieferoption|"
+    r"sendungsoption|umleitung|buchen|angebot|angebote|shoppen|shop besuchen|"
+    r"black friday|black week|cyber monday|prime day|amazon haul|\bhaul\b|"
+    r"freshty|day shop|deals?|marken|prozent|\d+\s*%|gutschein|rabatt|"
+    r"newsletter|werbung|empfehlung|entdecke|jetzt kaufen|nur heute|"
+    r"kundenlieblinge|bestseller|best seller|zubehör|zubehoer|"
+    r"produkte & zubehör|produkte und zubehör|für kunden|für dich|für sie)",
+    re.IGNORECASE,
+)
+
+
+def looks_like_marketing_product(value: str | None) -> bool:
+    """Return true for subject/link fragments that are not product names."""
+    return bool(value and _MARKETING_PRODUCT_RE.search(value))
+
+
+def looks_like_marketing_subject(value: str | None) -> bool:
+    """Return true for a subject that is marketing but not parcel related."""
+    if not value:
+        return False
+    return bool(
+        _NON_PACKAGE_SUBJECT.search(value)
+        and not _PARCEL_SUBJECT_HINT.search(value)
+    )
+
 
 _IMAGE_REJECT = re.compile(
     r"(pixel|beacon|track(?:ing)?|spacer|transparent|logo|icon|sprite|badge|"
@@ -993,6 +1029,8 @@ def _clean_product(value: str) -> str | None:
     key = normalize_key(value)
     if not key or key in _PRODUCT_REJECT_KEYS:
         return None
+    if _MARKETING_PRODUCT_RE.search(value):
+        return None
     if any(
         token in key
         for token in (
@@ -1041,23 +1079,29 @@ def _extract_products(
                 candidates.append((10, clean))
 
     for href, link_text in links:
+        href_lower = href.casefold()
+        is_product_link = bool(
+            re.search(r"/(?:dp|gp/product)/[A-Z0-9]{10}", href, re.IGNORECASE)
+            or any(
+                token in href_lower
+                for token in ("/product", "/artikel", "/produkt", "/p/")
+            )
+        )
+        if not is_product_link:
+            # Navigation/marketing links are never product names.
+            continue
         clean = _clean_product(link_text)
         if not clean:
             continue
-        score = 3
-        href_lower = href.casefold()
-        if re.search(r"/(?:dp|gp/product)/[A-Z0-9]{10}", href, re.IGNORECASE):
-            score += 7
-        elif any(token in href_lower for token in ("/product", "/artikel", "/p/", "/shop/")):
-            score += 2
+        score = 10 if "/dp/" in href_lower or "/gp/product/" in href_lower else 5
         if clean.casefold() in (merchant or "").casefold():
             continue
         candidates.append((score, clean))
 
     for image in images:
         clean = _clean_product(image.get("alt", ""))
-        if clean:
-            candidates.append((4, clean))
+        if clean and len(clean.split()) >= 2:
+            candidates.append((2, clean))
 
     for line in text.split("\n"):
         line = line.strip()
@@ -1364,10 +1408,10 @@ class EmailParser:
         # contain the word "Bestellung" and an order number.  They are not
         # parcels.  A real tracking number overrides this guard.
         sender_local = email.sender_email.split("@", 1)[0]
-        if not tracking_numbers and (
-            _NON_PACKAGE_SUBJECT.search(subject)
-            or _NON_PACKAGE_SENDER.search(sender_local)
-        ):
+        marketing_sender = bool(_NON_PACKAGE_SENDER.search(sender_local))
+        marketing_subject = bool(_NON_PACKAGE_SUBJECT.search(subject))
+        has_parcel_word = bool(_PARCEL_SUBJECT_HINT.search(subject))
+        if (marketing_sender or marketing_subject) and not has_parcel_word:
             return None
         order_numbers = _extract_order_numbers(text, subject, tracking_numbers)
         carrier = _detect_carrier(domain, email.sender_name, subject, text, tracking_numbers)
@@ -1390,20 +1434,35 @@ class EmailParser:
                     "wir haben ihre bestellung erhalten",
                 )
             )
-            if not order_numbers and not (merchant and strong_order_phrase):
+            strong_confirmation_subject = any(
+                token in normalize_key(subject)
+                for token in (
+                    "bestellbestaetigung",
+                    "bestellbestätigung",
+                    "order confirmation",
+                    "bestellung eingegangen",
+                    "bestellung erhalten",
+                    "wir haben deine bestellung erhalten",
+                    "wir haben ihre bestellung erhalten",
+                )
+            )
+            if not order_numbers and not (
+                merchant and strong_order_phrase and strong_confirmation_subject
+            ):
                 return None
         elif kind == "shipping_confirmation":
-            if not (tracking_numbers or order_numbers or (merchant and carrier)):
+            # A merchant and a carrier name alone are not enough; carriers
+            # and marketplaces also send newsletters.
+            if not (tracking_numbers or order_numbers):
                 return None
         elif kind in {"delivery_announcement", "tracking_update", "delay", "pickup", "delivered"}:
-            # A merchant name alone is not enough for a status mail; that would
-            # turn generic Amazon/marketplace newsletters into "delivered"
-            # parcels.  Require a tracking number, an order number or a known
-            # carrier.
-            if not (tracking_numbers or order_numbers or carrier):
+            # Require a hard parcel anchor.  A carrier sender or merchant name
+            # alone is not enough: DHL/Amazon newsletters contain words like
+            # "unterwegs" and "Zustellung" too.
+            if not (tracking_numbers or order_numbers):
                 return None
         elif kind in {"return_label", "return", "cancellation"}:
-            if not (merchant or order_numbers or tracking_numbers or carrier):
+            if not (merchant or order_numbers or tracking_numbers):
                 return None
 
         product_names = _extract_products(

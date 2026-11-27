@@ -460,3 +460,28 @@ def test_stale_order_placeholders_are_cleaned_up() -> None:
     removed = mgr.purge_stale_order_placeholders(7, utcnow())
     assert removed == 1
     assert not mgr.shipments
+
+
+def test_marketing_product_artifacts_are_removed_or_cleaned() -> None:
+    mgr = manager()
+    mgr.apply_parsed(parsed("amazon_shipping"))
+    shipment = next(iter(mgr.shipments.values()))
+
+    shipment.product_name = "Angebote shoppen"
+    shipment.product_names = ["Angebote shoppen"]
+    shipment.tracking_number = None
+    removed = mgr.clean_marketing_artifacts()
+    assert removed == 1
+    assert not mgr.shipments
+
+    mgr.apply_parsed(
+        replace(parsed("amazon_shipping"), message_id="marketing-with-tracking")
+    )
+    shipment = next(iter(mgr.shipments.values()))
+    shipment.product_name = "Black Friday Angebote"
+    shipment.product_names = ["Black Friday Angebote"]
+    removed = mgr.clean_marketing_artifacts()
+    assert removed == 0
+    assert shipment.product_name is None
+    assert shipment.product_names == []
+    assert shipment.tracking_number == "00340434161094000000"

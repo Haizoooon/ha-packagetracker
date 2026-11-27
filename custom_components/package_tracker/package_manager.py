@@ -31,7 +31,11 @@ from .const import (
     STATUS_UNKNOWN,
     TERMINAL_STATUSES,
 )
-from .email_parser import ParsedEmail
+from .email_parser import (
+    ParsedEmail,
+    looks_like_marketing_product,
+    looks_like_marketing_subject,
+)
 from .models import (
     EmailRef,
     Order,
@@ -1170,6 +1174,45 @@ class PackageManager:
             if not key.startswith(f"{package_id}:")
         }
         return shipment
+
+    def clean_marketing_artifacts(self) -> int:
+        """Remove or rename parcels created from marketing e-mails.
+
+        Older parser versions sometimes used newsletter subjects as product
+        names.  Parcels without a tracking number are not real shipments and
+        are removed.  Parcels with a tracking number are kept, but bogus
+        product names are cleared so the UI falls back to "Parcel from …".
+        """
+        removed = 0
+        for shipment_id, shipment in list(self.shipments.items()):
+            names = [
+                value
+                for value in [shipment.product_name, *shipment.product_names]
+                if value
+            ]
+            if not any(looks_like_marketing_product(value) for value in names):
+                continue
+            marketing_mail = any(
+                looks_like_marketing_subject(email.subject)
+                for email in shipment.emails
+            )
+            if not shipment.tracking_number or marketing_mail:
+                self.delete_shipment(shipment_id)
+                removed += 1
+                continue
+            cleaned: list[str] = []
+            seen: set[str] = set()
+            for value in names:
+                if looks_like_marketing_product(value):
+                    continue
+                key = normalize_key(value)
+                if key and key not in seen:
+                    seen.add(key)
+                    cleaned.append(value)
+            shipment.product_name = cleaned[0] if cleaned else None
+            shipment.product_names = cleaned[:MAX_PRODUCT_NAMES]
+            shipment.updated_at = utcnow_iso()
+        return removed
 
     def purge_stale_order_placeholders(self, days: int, now: datetime) -> int:
         """Remove old ``ordered`` placeholders that never got a tracking number.

@@ -124,6 +124,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ),
         dt_util.utcnow(),
     )
+    manager.clean_marketing_artifacts()
     coordinator = PackageTrackerCoordinator(
         hass, entry, manager, store, gmail
     )

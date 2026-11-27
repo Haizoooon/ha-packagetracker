@@ -207,11 +207,13 @@ class PackageTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     ),
                     dt_util.utcnow(),
                 )
-                if removed or stale:
+                marketing = self.manager.clean_marketing_artifacts()
+                if removed or stale or marketing:
                     _LOGGER.debug(
-                        "Removed %s old terminal packages and %s stale order placeholders",
+                        "Removed %s old terminal packages, %s stale order placeholders and %s marketing artifacts",
                         removed,
                         stale,
+                        marketing,
                     )
             except (TypeError, ValueError):
                 pass

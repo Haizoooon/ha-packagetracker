@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
+
 from custom_components.package_tracker.const import (
     CARRIER_AMAZON,
     CARRIER_DHL,
@@ -266,6 +268,37 @@ def test_invoice_mail_with_order_number_is_not_a_package() -> None:
         text=(
             "Vielen Dank für deine Bestellung. Im Anhang findest du deine Rechnung. "
             "Bestellnummer: 302-1234567-8901234."
+        ),
+        html="",
+    )
+    assert EmailParser(UTC).parse(email) is None
+
+
+@pytest.mark.parametrize(
+    "subject",
+    [
+        "Ablageort buchen",
+        "Amazon Haul: 15% auf Besteller",
+        "Angebote shoppen",
+        "Apple Produkte & Zubehör - Deals",
+        "Bis zu 30 % auf Amazon Marken",
+        "Black Friday Angebote",
+        "Black Friday Woche",
+        "Der Freshty Day Shop",
+    ],
+)
+def test_marketing_subjects_are_never_parcels(subject: str) -> None:
+    email = EmailMessage(
+        id="marketing-subject",
+        thread_id=None,
+        received_at=datetime(2026, 11, 24, 9, 0, tzinfo=UTC),
+        sender_name="Amazon.de",
+        sender_email="newsletter@amazon.de",
+        subject=subject,
+        text=(
+            "Sendungsnummer: 00340434161094000000. "
+            "Ihre Sendung ist unterwegs. Bestellnummer: 302-1234567-8901234. "
+            "Jetzt Angebote entdecken."
         ),
         html="",
     )

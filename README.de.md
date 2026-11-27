@@ -8,7 +8,7 @@ Intelligente Paketverwaltung für Home Assistant – vollständig lokal, ohne ex
 
 Package Tracker verbindet dein Gmail-Postfach über die offizielle Gmail API (nur lesend), erkennt Bestell- und Versand-E-Mails, führt zusammengehörige Nachrichten zu **einem Paket** zusammen und stellt alles über eine native Home-Assistant-Integration, Sensoren, Events, Automationen und eine eigene Lovelace-Karte bereit.
 
-> **Status:** 1.0.3 – produktiv nutzbar, getestet mit Home Assistant 2026.10.4, Python 3.14, TypeScript/Lit 3.
+> **Status:** 1.0.4 – produktiv nutzbar, getestet mit Home Assistant 2026.10.4, Python 3.14, TypeScript/Lit 3.
 >
 > **Wichtig:** Die Paketerkennung ist eine lokale Heuristik. Sie ist bewusst konservativ und wird ständig um echte Händler-/Paketdienst-Vorlagen erweitert. Es werden **keine** erfundenen Trackingdaten angezeigt. Fehlt eine offizielle Schnittstelle, bleibt das Feld leer.
 

@@ -8,7 +8,7 @@ Intelligent parcel tracking for Home Assistant – fully local, no external AI, 
 
 Package Tracker connects to your Gmail inbox through the official Gmail API (read-only), recognises order and shipping e-mails, merges related messages into **one parcel**, and exposes everything through a native Home Assistant integration, sensors, events, automations and a custom Lovelace card.
 
-> **Status:** 1.0.3 – production-ready, tested with Home Assistant 2026.10.4, Python 3.14 and TypeScript/Lit 3.
+> **Status:** 1.0.4 – production-ready, tested with Home Assistant 2026.10.4, Python 3.14 and TypeScript/Lit 3.
 >
 > **Important:** Parcel recognition is a local heuristic. It is intentionally conservative and is continuously extended with real-world merchant and carrier templates. No tracking information is invented. If no official interface exists, the field stays empty.
 

@@ -277,7 +277,18 @@ class PackageStatusSensor(PackageTrackerEntity, SensorEntity):
     @property
     def name(self) -> str:
         shipment = self._shipment
-        return shipment.display_name if shipment is not None else "Paket"
+        if shipment is None:
+            return "Parcel"
+        if shipment.product_name:
+            return shipment.product_name
+        german = str(self.hass.config.language).lower().startswith("de")
+        if shipment.merchant:
+            return (
+                f"Paket von {shipment.merchant}"
+                if german
+                else f"Parcel from {shipment.merchant}"
+            )
+        return "Paket" if german else "Parcel"
 
     @property
     def available(self) -> bool:

@@ -231,8 +231,8 @@ class Shipment:
         if self.product_names:
             return self.product_names[0]
         if self.merchant:
-            return f"Paket von {self.merchant}"
-        return "Paket"
+            return f"Parcel from {self.merchant}"
+        return "Parcel"
 
     @property
     def label(self) -> str:

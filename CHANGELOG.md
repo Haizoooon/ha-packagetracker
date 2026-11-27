@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.4 – 2026-11-27
+
+- Marketing, newsletter and service mails such as “Ablageort buchen”, “Angebote shoppen”, “Black Friday Angebote” or “Amazon Haul” are rejected even if they contain a tracking-like number.
+- Status mails now require a real tracking or order number; a carrier sender alone is no longer sufficient.
+- Order confirmations without an order number require a strong confirmation subject.
+- Product names are only taken from product links, product labels or quantity lines; navigation and promotional links are ignored.
+- Existing marketing artifacts are cleaned automatically on setup/sync: bogus parcels without tracking are removed, real tracked parcels are renamed to “Parcel from …”.
+- Parcel entity fallback names are localised (English/German).
+
 ## 1.0.3 – 2026-11-27
 
 - Added `CONFIG_SCHEMA` for hassfest compliance.
