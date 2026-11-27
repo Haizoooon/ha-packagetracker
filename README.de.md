@@ -868,7 +868,7 @@ docs/                     # Automations- und Tracking-Dokumentation
 1. Version in `custom_components/package_tracker/manifest.json`, `const.py` (`VERSION`), `frontend/package.json` und `hacs.json`-Mindestversion konsistent halten.
 2. Frontend bauen (`npm run build`), Bundle committen.
 3. Tests ausführen.
-4. Tag `v1.0.1` setzen und pushen. Die GitHub Action erstellt `package_tracker.zip` und ein Release.
+4. Tag `vX.Y.Z` setzen und pushen. Die GitHub Action erstellt `package_tracker.zip` und ein Release.
 5. HACS installiert in dieser Konfiguration direkt aus dem Repository (`zip_release: false`); das ZIP-Release dient zusätzlich der manuellen Installation und Archivierung.
 
 Vor dem ersten HACS-Release: Repository öffentlich machen, Themen `home-assistant`, `hacs`, `lovelace` setzen und die HACS-Validierung (`Validate`-Workflow) grün haben.
