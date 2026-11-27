@@ -70,7 +70,8 @@
           "tracking_expected_path": "JSON-Pfad zum Liefertermin",
           "tracking_events_path": "JSON-Pfad zu Ereignissen",
           "tracking_event_time_path": "JSON-Pfad zum Zeitstempel",
-          "tracking_event_text_path": "JSON-Pfad zum Ereignistext"
+          "tracking_event_text_path": "JSON-Pfad zum Ereignistext",
+          "order_placeholder_days": "Nur Bestellungen der letzten X Tage als aktives Paket anzeigen (0 = unbegrenzt)"
         }
       }
     },

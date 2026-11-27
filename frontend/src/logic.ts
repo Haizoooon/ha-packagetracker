@@ -11,7 +11,7 @@ import {
 export type Lang = "de" | "en";
 
 export function languageOf(language?: string): Lang {
-  return (language || "de").toLowerCase().startsWith("de") ? "de" : "en";
+  return (language || "en").toLowerCase().startsWith("de") ? "de" : "en";
 }
 
 export function pick(lang: Lang, de: string, en: string): string {
@@ -376,4 +376,35 @@ export function emailKindLabel(kind?: string | null, lang: Lang = "de"): string 
   };
   const entry = labels[kind || ""];
   return entry ? entry[lang] : pick(lang, "E-Mail", "E-mail");
+}
+
+const NOTE_TRANSLATIONS: Record<string, { de: string; en: string }> = {
+  "Delivery confirmed": { de: "Zustellung bestätigt", en: "Delivery confirmed" },
+  "Delay reported": { de: "Verzögerung gemeldet", en: "Delay reported" },
+  "Pickup required": { de: "Abholung erforderlich", en: "Pickup required" },
+  "Out for delivery": { de: "In Zustellung", en: "Out for delivery" },
+  "Shipping confirmation": { de: "Versandbestätigung", en: "Shipping confirmation" },
+  "Tracking update": { de: "Tracking-Update", en: "Tracking update" },
+  "Order confirmation": { de: "Bestellbestätigung", en: "Order confirmation" },
+  "Return": { de: "Retoure", en: "Return" },
+  "Cancellation": { de: "Stornierung", en: "Cancellation" },
+  "Return label received": { de: "Retourenlabel erhalten", en: "Return label received" },
+  "Tracking number detected": { de: "Tracking-Nummer erkannt", en: "Tracking number detected" },
+  // Legacy notes persisted by 1.0.x versions.
+  "Zustellung bestätigt": { de: "Zustellung bestätigt", en: "Delivery confirmed" },
+  "Verzögerung gemeldet": { de: "Verzögerung gemeldet", en: "Delay reported" },
+  "Abholung erforderlich": { de: "Abholung erforderlich", en: "Pickup required" },
+  "In Zustellung": { de: "In Zustellung", en: "Out for delivery" },
+  "Versandbestätigung": { de: "Versandbestätigung", en: "Shipping confirmation" },
+  "Tracking-Update": { de: "Tracking-Update", en: "Tracking update" },
+  "Bestellbestätigung": { de: "Bestellbestätigung", en: "Order confirmation" },
+  "Retoure": { de: "Retoure", en: "Return" },
+  "Stornierung": { de: "Stornierung", en: "Cancellation" },
+  "Retourenlabel erhalten": { de: "Retourenlabel erhalten", en: "Return label received" },
+};
+
+export function translateNote(value?: string | null, lang: Lang = "en"): string | undefined {
+  if (!value) return undefined;
+  const entry = NOTE_TRANSLATIONS[value];
+  return entry ? entry[lang] : value;
 }

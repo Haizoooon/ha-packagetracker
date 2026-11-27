@@ -1,13 +1,12 @@
-# Beispiel-Dashboard
-
-title: Pakete
+# Example dashboard
+title: Parcels
 views:
-  - title: Lieferungen
-    path: pakete
+  - title: Deliveries
+    path: parcels
     icon: mdi:package-variant-closed
     cards:
       - type: custom:package-tracker-card
-        title: Unterwegs
+        title: In transit
         max_packages: 12
         show_delivered: false
         show_images: true
@@ -20,7 +19,7 @@ views:
         show_last_sync: true
 
       - type: custom:package-tracker-card
-        title: Zugestellt
+        title: Delivered
         max_packages: 8
         show_delivered: true
         default_filter: delivered
@@ -29,17 +28,17 @@ views:
         compact: true
 
       - type: entities
-        title: Paket-Übersicht
+        title: Parcel overview
         entities:
           - entity: sensor.package_tracker_packages
-            name: Aktive Pakete
+            name: Active parcels
           - entity: sensor.package_tracker_deliveries_today
-            name: Lieferungen heute
+            name: Deliveries today
           - entity: sensor.package_tracker_delivered_today
-            name: Heute zugestellt
+            name: Delivered today
           - entity: sensor.package_tracker_packages_in_transit
-            name: Unterwegs
+            name: In transit
           - entity: sensor.package_tracker_delayed
-            name: Verspätet
+            name: Delayed
           - entity: sensor.package_tracker_next_delivery
-            name: Nächste Lieferung
+            name: Next delivery

@@ -237,7 +237,7 @@ class Shipment:
     @property
     def label(self) -> str:
         name = self.display_name
-        merchant = self.merchant or "Unbekannter Händler"
+        merchant = self.merchant or "Unknown merchant"
         return f"{name} – {merchant}"
 
     @property

@@ -360,6 +360,19 @@ _ACTUAL_RETURN = re.compile(
     re.IGNORECASE,
 )
 
+_NON_PACKAGE_SUBJECT = re.compile(
+    r"(bewert|bewerte|bewertung|rezension|feedback|umfrage|meinung|erfahrung|"
+    r"rechnung|invoice|zahlung|payment|gutschein|coupon|newsletter|angebot|"
+    r"rabatt|sale|black friday|cyber monday|deal|empfehlung|entdecke|"
+    r"jetzt kaufen|nur heute|werbung)",
+    re.IGNORECASE,
+)
+_NON_PACKAGE_SENDER = re.compile(
+    r"^(?:newsletter|marketing|angebote|deals|promo|werbung|bewertung|"
+    r"bewerten|review|reviews|feedback|rechnung|invoice|payment|zahlen)",
+    re.IGNORECASE,
+)
+
 _ORDER_LABEL_RE = re.compile(
     r"(?:bestell(?:nummer|ungsnummer|nr\.?|id)|"
     r"bestellung\s*(?:nr\.?|nummer|#)|"
@@ -601,6 +614,35 @@ _PRODUCT_REJECT_RAW = {
     "ihr paket",
     "deine sendung",
     "ihre sendung",
+    "sendung verfolgen",
+    "paket verfolgen",
+    "lieferung verfolgen",
+    "sendungsstatus",
+    "status ansehen",
+    "tracking anzeigen",
+    "meine bestellungen",
+    "alle bestellungen",
+    "bestellübersicht",
+    "bestelluebersicht",
+    "bestellhistorie",
+    "mein konto",
+    "anmelden",
+    "registrieren",
+    "jetzt bewerten",
+    "bewerten",
+    "rezension schreiben",
+    "produkt bewerten",
+    "ruecksendung starten",
+    "rücksendung starten",
+    "retoure anmelden",
+    "problem melden",
+    "kundenservice",
+    "hilfe center",
+    "zur startseite",
+    "weiter einkaufen",
+    "shop besuchen",
+    "cookie",
+    "einstellungen",
     "amazon de",
     "amazon",
     "dhl",
@@ -1181,7 +1223,7 @@ def _detect_status(
     # "Retourenlabel" is not a returned parcel; do not let the word "retoure"
     # in the label e-mail mark an existing shipment as returned.
     if scores["return_label"] > 0 and not _ACTUAL_RETURN.search(combined_text):
-        return "return_label", None, 0.55, "Retourenlabel erhalten"
+        return "return_label", None, 0.55, "Return label received"
 
     # Explicit carrier/label wording should not masquerade as a delivered
     # parcel just because a footer contains "zugestellt".
@@ -1248,15 +1290,15 @@ def _detect_status(
 
 
 STATUS_LABEL_HINTS: Final[dict[str, str]] = {
-    "delivered": "Zustellung bestätigt",
-    "delay": "Verzögerung gemeldet",
-    "pickup": "Abholung erforderlich",
-    "out_for_delivery": "In Zustellung",
-    "shipped": "Versandbestätigung",
-    "in_transit": "Tracking-Update",
-    "ordered": "Bestellbestätigung",
-    "returned": "Retoure",
-    "cancelled": "Stornierung",
+    "delivered": "Delivery confirmed",
+    "delay": "Delay reported",
+    "pickup": "Pickup required",
+    "out_for_delivery": "Out for delivery",
+    "shipped": "Shipping confirmation",
+    "in_transit": "Tracking update",
+    "ordered": "Order confirmation",
+    "returned": "Return",
+    "cancelled": "Cancellation",
 }
 
 
@@ -1318,6 +1360,15 @@ class EmailParser:
             merchant = _merchant_from_text(text, subject)
 
         tracking_numbers = _extract_tracking_numbers(text, subject, links)
+        # Review requests, invoices, newsletters and discount mails often
+        # contain the word "Bestellung" and an order number.  They are not
+        # parcels.  A real tracking number overrides this guard.
+        sender_local = email.sender_email.split("@", 1)[0]
+        if not tracking_numbers and (
+            _NON_PACKAGE_SUBJECT.search(subject)
+            or _NON_PACKAGE_SENDER.search(sender_local)
+        ):
+            return None
         order_numbers = _extract_order_numbers(text, subject, tracking_numbers)
         carrier = _detect_carrier(domain, email.sender_name, subject, text, tracking_numbers)
 
@@ -1445,17 +1496,8 @@ class EmailParser:
                 "tracking_update",
                 STATUS_IN_TRANSIT,
                 0.45,
-                "Tracking-Nummer erkannt",
+                "Tracking number detected",
             )
-        if order_numbers and merchant:
-            subject_key = normalize_key(subject)
-            if any(token in subject_key for token in ("bestellung", "order")):
-                return (
-                    "order_confirmation",
-                    STATUS_ORDERED,
-                    0.4,
-                    "Bestellung erkannt",
-                )
         # A carrier sender alone is not enough: carriers also send marketing.
         return ("unknown", None, 0.0, None)
 

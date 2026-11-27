@@ -1,139 +1,146 @@
 # Package Tracker
 
-Intelligente Paketverwaltung für Home Assistant – vollständig lokal, ohne externe KI und ohne Marketing-Datenbank.
+[**English**](README.md) · [Deutsch](README.de.md)
 
-Package Tracker verbindet dein Gmail-Postfach über die offizielle Gmail API (nur lesend), erkennt Bestell- und Versand-E-Mails, führt zusammengehörige Nachrichten zu **einem Paket** zusammen und stellt alles über eine native Home-Assistant-Integration, Sensoren, Events, Automationen und eine eigene Lovelace-Karte bereit.
+![Package Tracker logo](docs/logo.png)
 
-> **Status:** 1.0.0 – produktiv nutzbar, getestet mit Home Assistant 2026.10.4, Python 3.14, TypeScript/Lit 3.
+Intelligent parcel tracking for Home Assistant – fully local, no external AI, no marketing database.
+
+Package Tracker connects to your Gmail inbox through the official Gmail API (read-only), recognises order and shipping e-mails, merges related messages into **one parcel**, and exposes everything through a native Home Assistant integration, sensors, events, automations and a custom Lovelace card.
+
+> **Status:** 1.0.1 – production-ready, tested with Home Assistant 2026.10.4, Python 3.14 and TypeScript/Lit 3.
 >
-> **Wichtig:** Die Paketerkennung ist eine lokale Heuristik. Sie ist bewusst konservativ und wird ständig um echte Händler-/Paketdienst-Vorlagen erweitert. Es werden **keine** erfundenen Trackingdaten angezeigt. Fehlt eine offizielle Schnittstelle, bleibt das Feld leer.
+> **Important:** Parcel recognition is a local heuristic. It is intentionally conservative and is continuously extended with real-world merchant and carrier templates. No tracking information is invented. If no official interface exists, the field stays empty.
 
 ---
 
-## Inhaltsverzeichnis
+## Table of contents
 
-1. [Funktionsumfang](#funktionsumfang)
-2. [Architektur und Datenmodell](#architektur-und-datenmodell)
-3. [Voraussetzungen](#voraussetzungen)
-4. [Installation über HACS](#installation-über-hacs)
-5. [Manuelle Installation](#manuelle-installation)
-6. [Google Cloud und Gmail API einrichten](#google-cloud-und-gmail-api-einrichten)
-7. [Integration einrichten](#integration-einrichten)
-8. [Optionen](#optionen)
-9. [Dashboard-Karte](#dashboard-karte)
-10. [Sensoren und Entities](#sensoren-und-entities)
+1. [Features](#features)
+2. [Architecture and data model](#architecture-and-data-model)
+3. [Requirements](#requirements)
+4. [Installation via HACS](#installation-via-hacs)
+5. [Manual installation](#manual-installation)
+6. [Set up Google Cloud and the Gmail API](#set-up-google-cloud-and-the-gmail-api)
+7. [Set up the integration](#set-up-the-integration)
+8. [Options](#options)
+9. [Dashboard card](#dashboard-card)
+10. [Sensors and entities](#sensors-and-entities)
 11. [Events](#events)
-12. [Services / Actions](#services--actions)
-13. [Benachrichtigungen](#benachrichtigungen)
-14. [Automationen und Smart-Home-Integration](#automationen-und-smart-home-integration)
-15. [Optional: externes Tracking](#optional-externes-tracking)
-16. [Datenschutz und Sicherheit](#datenschutz-und-sicherheit)
-17. [Fehlerbehebung](#fehlerbehebung)
-18. [Grenzen und bewusste Entscheidungen](#grenzen-und-bewusste-entscheidungen)
-19. [Entwicklung und Tests](#entwicklung-und-tests)
-20. [Release und HACS-Veröffentlichung](#release-und-hacs-veröffentlichung)
+12. [Services / actions](#services--actions)
+13. [Notifications](#notifications)
+14. [Automations and smart-home integration](#automations-and-smart-home-integration)
+15. [Optional external tracking](#optional-external-tracking)
+16. [Privacy and security](#privacy-and-security)
+17. [Troubleshooting](#troubleshooting)
+18. [Limitations and design decisions](#limitations-and-design-decisions)
+19. [Development and tests](#development-and-tests)
+20. [Releases and HACS](#releases-and-hacs)
 
 ---
 
-## Funktionsumfang
+## Features
 
-- **Gmail API, ausschließlich lesend** (`gmail.readonly`), OAuth2 über den Home-Assistant-Config-Flow.
-- **Lokale E-Mail-Analyse** in Python: Absender, Betreff, Text, HTML, Links, Produktbilder, Bestellnummern, Sendungsnummern, Liefertermine und Zeitfenster.
-- **Zentrale Paketverwaltung** mit Bestellungen und Sendungen. Eine Bestellung kann mehrere Sendungen enthalten; mehrere E-Mails werden zu einem Paket zusammengeführt.
-- **Unterstützte Paketdienste:** DHL, Deutsche Post, Hermes, DPD, GLS, UPS, FedEx, Amazon Logistics.
-- **10 Statuswerte:** `ordered`, `shipped`, `in_transit`, `out_for_delivery`, `delivered`, `delayed`, `ready_for_pickup`, `returned`, `cancelled`, `unknown`.
-- **Persistente Speicherung** über Home Assistant `Store`, übersteht Neustarts und Updates.
-- **Events** für jede Statusänderung und ein eigenes Event-System für Automationen.
-- **Optionale Push-Benachrichtigungen** über die normale Home-Assistant-`notify`-Architektur – anbieterunabhängig und ohne Duplikate.
-- **Native Device-Trigger, Conditions und Actions** für den Automation-Editor.
-- **Eigene Lovelace-Karte** `custom:package-tracker-card` mit Übersicht, Filtern, Suche, Sortierung, Detailansicht und visuellem Konfigurationseditor.
-- **Optionales externes Tracking** (DHL Unified API oder eigener JSON-Endpunkt) – standardmäßig aus, Fehler isoliert.
-- **Datenschutz:** Keine E-Mail-Inhalte werden dauerhaft gespeichert, keine Weitergabe an KI-Dienste, Tokens werden in Diagnostics geschwärzt.
+- **Gmail API, read-only** (`gmail.readonly`), OAuth2 through the Home Assistant config flow.
+- **Local e-mail analysis** in Python: sender, subject, plain text, HTML, links, product images, order numbers, tracking numbers, delivery dates and time windows.
+- **Central parcel management** with orders and shipments. One order can contain several shipments; several e-mails are merged into one parcel.
+- **Supported carriers:** DHL, Deutsche Post, Hermes, DPD, GLS, UPS, FedEx and Amazon Logistics.
+- **10 status values:** `ordered`, `shipped`, `in_transit`, `out_for_delivery`, `delivered`, `delayed`, `ready_for_pickup`, `returned`, `cancelled`, `unknown`.
+- **Persistent storage** through Home Assistant `Store`, surviving restarts and updates.
+- **Events** for every status change and a dedicated event system for automations.
+- **Optional push notifications** through the normal Home Assistant `notify` architecture – provider-independent and duplicate-free.
+- **Native device triggers, conditions and actions** for the automation editor.
+- **Custom Lovelace card** `custom:package-tracker-card` with overview, filters, search, sorting, detail view and a visual configuration editor.
+- **Optional external tracking** (DHL Unified API or a custom JSON endpoint) – disabled by default, errors isolated.
+- **Privacy:** no e-mail bodies are persisted, no data is sent to AI services, tokens are redacted in diagnostics.
+- **English by default, German translation included.** E-mail recognition itself understands German and English shipping terminology.
 
-### Bewusst nicht enthalten
+### Intentionally not included
 
-- Keine erfundenen Tracking-Events, keine Demo-Pakete in der produktiven Ansicht.
-- Kein Scraping von Paketdienst-Websites als Voraussetzung.
-- Keine verpflichtende kostenpflichtige Tracking-API.
-- Keine externe KI-API.
-- Keine Garantie auf minutengenaue Lieferfenster – diese stammen aus den E-Mails des Händlers/Paketdienstes.
+- No invented tracking events, no demo parcels in the production UI.
+- No scraping of carrier websites as a requirement.
+- No mandatory paid tracking API.
+- No external AI API.
+- No guarantee of minute-accurate delivery windows – they come from merchant/carrier e-mails.
 
 ---
 
-## Architektur und Datenmodell
+## Architecture and data model
 
 ```text
 Gmail API (readonly)
         │
         ▼
-GmailClient ──► EmailParser (lokal, regelbasiert)
+GmailClient ──► EmailParser (local, rule based)
         │                 │
         │                 ▼
         │           ParsedEmail
         │                 │
         ▼                 ▼
-PackageTrackerCoordinator ◄── PackageManager (eine gemeinsame Datenquelle)
+PackageTrackerCoordinator ◄── PackageManager (single source of truth)
         │                         │
-        │                         ├── Order (Bestellung)
-        │                         └── Shipment (Sendung = Paket)
+        │                         ├── Order
+        │                         └── Shipment (the parcel shown in the UI)
         │
-        ├── Home-Assistant-Events
-        ├── Notify-Services
-        ├── Sensoren / Binary Sensoren / Buttons
-        ├── Services & Device-Automationen
-        ├── WebSocket-API
-        └── Lovelace-Karte
+        ├── Home Assistant events
+        ├── Notify services
+        ├── Sensors / binary sensors / buttons
+        ├── Services & device automations
+        ├── WebSocket API
+        └── Lovelace card
 ```
 
-### Bestellung vs. Sendung
+### Order vs. shipment
 
-- **Order**: Händler, Bestellnummer, Bestelldatum, Produktliste, zugehörige Sendungen und E-Mail-Referenzen.
-- **Shipment**: das physische Paket mit eigener stabiler ID, Paketdienst, Sendungsnummer, Produkt, Terminen und kompletter Statushistorie.
+- **Order:** merchant, order number, order date, product list, related shipments and e-mail references.
+- **Shipment:** the physical parcel with its own stable ID, carrier, tracking number, product, dates and complete status history.
 
-Eine Bestellung kann mehrere Sendungen enthalten (z. B. Amazon teilt eine Bestellung in zwei Pakete). Mehrere E-Mails zu derselben Sendung werden zusammengeführt.
+One order can contain several shipments (for example, Amazon splitting an order into two parcels). Multiple e-mails for the same shipment are merged.
 
-### Stabile IDs
+### Stable IDs
 
-- Sendungs-ID: aus normalisierter Sendungsnummer (falls vorhanden), sonst deterministisch aus Bestellung/Thread/E-Mail.
-- Bestell-ID: aus Händler + Bestellnummer, sonst aus Thread/E-Mail.
-- Die IDs bleiben über Neustarts erhalten und werden in der Store-Datei gespeichert.
+- Shipment ID: derived from the normalised tracking number when available, otherwise deterministically from the order/thread/e-mail.
+- Order ID: derived from merchant + order number, otherwise from thread/e-mail.
+- IDs survive restarts and are stored in the Store file.
 
-### Zusammenführungsregeln (Auszug)
+### Merge rules (excerpt)
 
-1. Gleiche normalisierte Sendungsnummer → gleiche Sendung.
-2. Gleiche Bestellnummer + Händler → passende Sendung; vorhandene Platzhalter-Sendung wird angereichert.
-3. Neue Sendungsnummer zu einer bestehenden Bestellung → neue Sendung (Mehrpaket-Bestellung).
-4. Keine Sendungsnummer: Produktähnlichkeit, Bestellnummer, Händler und Zeitfenster; nur bei eindeutigem Treffer wird zusammengeführt.
-5. Retourenlabel ≠ retourniertes Paket. Ein Retourenlabel ändert den Status nicht.
-6. Status wird nie automatisch zurückgestuft; `delivered`, `returned`, `cancelled` sind terminal.
-7. Bereits verarbeitete Gmail-Message-IDs werden persistent gespeichert. Überlappende Sync-Fenster erzeugen keine Duplikate.
-
----
-
-## Voraussetzungen
-
-- Home Assistant **2026.10 oder neuer** (getestet mit 2026.10.4).
-- Ein Google-Konto mit Gmail.
-- Ein Google-Cloud-Projekt mit aktivierter **Gmail API**.
-- Für die OAuth-Weiterleitung eine öffentlich erreichbare **HTTPS-URL**:
-  - empfohlen: **My Home Assistant** (`https://my.home-assistant.io/redirect/oauth`), oder
-  - eine konfigurierte externe HTTPS-URL, z. B. `https://home.example.de/auth/external/callback`.
-- Internetzugriff von Home Assistant auf `gmail.googleapis.com`, `oauth2.googleapis.com` und `accounts.google.com`.
+1. Same normalised tracking number → same shipment.
+2. Same order number + merchant → matching shipment; an existing placeholder is enriched.
+3. New tracking number for an existing order → new shipment (multi-parcel order).
+4. No tracking number: product similarity, order number, merchant and time window; merging only on a unique match.
+5. A return label is **not** a returned parcel. A return label does not change the status.
+6. Status is never downgraded automatically; `delivered`, `returned` and `cancelled` are terminal.
+7. Processed Gmail message IDs are persisted. Overlapping sync windows do not create duplicates.
+8. Invoices, review requests, newsletters and coupon mails are rejected even if they contain an order number.
+9. Order confirmations only become active parcels within the configurable **order placeholder** window (default: 7 days). Older orders are retained for later matching but only appear when a shipping/tracking e-mail arrives.
 
 ---
 
-## Installation über HACS
+## Requirements
 
-1. HACS öffnen → **Integrationen** → Drei-Punkte-Menü → **Benutzerdefinierte Repositories**.
-2. Repository-URL dieses Projekts eintragen, Kategorie **Integration**.
-3. **Package Tracker** installieren.
-4. Home Assistant neu starten.
-5. **Einstellungen → Geräte & Dienste → Integration hinzufügen → Package Tracker**.
-6. Gmail verbinden (siehe unten).
+- Home Assistant **2026.10 or newer** (tested with 2026.10.4).
+- A Google account with Gmail.
+- A Google Cloud project with the **Gmail API** enabled.
+- A publicly reachable **HTTPS URL** for the OAuth redirect:
+  - recommended: **My Home Assistant** (`https://my.home-assistant.io/redirect/oauth`), or
+  - a configured external HTTPS URL, e.g. `https://home.example.com/auth/external/callback`.
+- Internet access from Home Assistant to `gmail.googleapis.com`, `oauth2.googleapis.com` and `accounts.google.com`.
 
-Die Lovelace-Karte ist im Integrationspaket enthalten. Sie wird beim Laden der Integration automatisch als Frontend-Ressource registriert (`/package_tracker_static/package-tracker-card.js`). Ein manuelles Bearbeiten von Home-Assistant-Core-Dateien ist nicht nötig.
+---
 
-Falls die Karte nach einem Update nicht erscheint: Browser-Cache leeren bzw. die Ressource einmal neu laden. Als Fallback kann sie manuell unter **Einstellungen → Dashboards → Ressourcen** als JavaScript-Modul eingetragen werden:
+## Installation via HACS
+
+1. Open HACS → **Integrations** → three-dot menu → **Custom repositories**.
+2. Add this repository URL, category **Integration**.
+3. Install **Package Tracker**.
+4. Restart Home Assistant.
+5. Go to **Settings → Devices & services → Add integration → Package Tracker**.
+6. Connect Gmail (see below).
+
+The Lovelace card is included in the integration package. It is automatically registered as a frontend resource (`/package_tracker_static/package-tracker-card.js`). No editing of Home Assistant Core files is required.
+
+If the card does not appear after an update, clear the browser cache or reload the resource. As a fallback, add it manually under **Settings → Dashboards → Resources** as a JavaScript module:
 
 ```text
 /package_tracker_static/package-tracker-card.js
@@ -141,129 +148,130 @@ Falls die Karte nach einem Update nicht erscheint: Browser-Cache leeren bzw. die
 
 ---
 
-## Manuelle Installation
+## Manual installation
 
-1. Ordner `custom_components/package_tracker` aus diesem Repository nach
-   `<HA-Konfigurationsordner>/custom_components/package_tracker` kopieren.
-2. Sicherstellen, dass `manifest.json`, alle Python-Dateien und
-   `frontend/package-tracker-card.js` vorhanden sind.
-3. Home Assistant neu starten.
-4. Integration über die UI hinzufügen.
+1. Copy `custom_components/package_tracker` into
+   `<HA config directory>/custom_components/package_tracker`.
+2. Make sure `manifest.json`, all Python files and
+   `frontend/package-tracker-card.js` are present.
+3. Restart Home Assistant.
+4. Add the integration through the UI.
 
 ---
 
-## Google Cloud und Gmail API einrichten
+## Set up Google Cloud and the Gmail API
 
-Diese Schritte erfolgen einmalig in der [Google Cloud Console](https://console.cloud.google.com/).
+These steps are performed once in the [Google Cloud Console](https://console.cloud.google.com/).
 
-### 1. Projekt anlegen
+### 1. Create a project
 
-Neues Projekt erstellen, z. B. `Home Assistant Package Tracker`.
+Create a new project, e.g. `Home Assistant Package Tracker`.
 
-### 2. Gmail API aktivieren
+### 2. Enable the Gmail API
 
-**APIs & Dienste → Bibliothek → Gmail API → Aktivieren**.
+**APIs & Services → Library → Gmail API → Enable**.
 
-### 3. OAuth-Zustimmungsbildschirm
+### 3. OAuth consent screen
 
-**APIs & Dienste → OAuth-Zustimmungsbildschirm**:
+**APIs & Services → OAuth consent screen**:
 
-- Nutzertyp: **Extern** (für private Google-Konten).
-- App-Name, Support-E-Mail und Entwicklerkontakt ausfüllen.
-- **Scopes:** `https://www.googleapis.com/auth/gmail.readonly` hinzufügen.
-- Im Testmodus das eigene Google-Konto als **Testnutzer** hinzufügen.
-- Für dauerhaften Betrieb die App veröffentlichen; Google kann bei sensiblen Scopes eine Verifizierung verlangen. Das ist ein Google-Prozess, kein Bestandteil dieser Integration.
+- User type: **External** (for personal Google accounts).
+- Fill in app name, support e-mail and developer contact.
+- **Scopes:** add `https://www.googleapis.com/auth/gmail.readonly`.
+- In testing mode, add your Google account as a **test user**.
+- For permanent operation, publish the app. Google may require verification for sensitive scopes; this is a Google process, not part of this integration.
 
-### 4. OAuth-Client erstellen
+### 4. Create OAuth client
 
-**APIs & Dienste → Anmeldedaten → Anmeldedaten erstellen → OAuth-Client-ID**:
+**APIs & Services → Credentials → Create credentials → OAuth client ID**:
 
-- Anwendungstyp: **Webanwendung**.
-- Name: z. B. `Home Assistant`.
-- **Autorisierte Weiterleitungs-URI:**
+- Application type: **Web application**.
+- Name: e.g. `Home Assistant`.
+- **Authorised redirect URI:**
 
 ```text
 https://my.home-assistant.io/redirect/oauth
 ```
 
-oder, falls du kein My Home Assistant verwendest:
+or, without My Home Assistant:
 
 ```text
-https://<deine-externe-home-assistant-url>/auth/external/callback
+https://<your-external-home-assistant-url>/auth/external/callback
 ```
 
-Die URI muss **exakt** mit der URI übereinstimmen, die im Config-Flow angezeigt wird (inkl. `https://`, ohne trailing slash).
+The URI must match **exactly** the URI shown in the config flow (including `https://`, no trailing slash).
 
-### 5. Client-ID und Client-Secret notieren
+### 5. Note the client ID and client secret
 
-Beides wird gleich in Home Assistant eingetragen. Das Client-Secret ist kein Gmail-Passwort; es identifiziert nur die OAuth-Anwendung.
+Both are entered in Home Assistant. The client secret is not your Gmail password; it only identifies the OAuth application.
 
-> **Sicherheit:** Das Client-Secret wird im Home-Assistant-Config-Entry gespeichert (wie bei anderen OAuth-Integrationen). Tokens werden von Home Assistant verwaltet und bei Bedarf automatisch erneuert. In Diagnostics werden Secrets geschwärzt.
-
----
-
-## Integration einrichten
-
-1. **Einstellungen → Geräte & Dienste → Integration hinzufügen → Package Tracker**.
-2. Client-ID und Client-Secret einfügen.
-3. Auf **Weiter** klicken; Google-Anmeldung im Popup durchführen.
-4. Der **lesende Gmail-Zugriff** muss erlaubt werden. Ohne diesen Scope bricht die Einrichtung mit einer verständlichen Meldung ab.
-5. Sync-Intervall und ersten Importzeitraum wählen.
-6. Optional direkt einen `notify`-Dienst und Benachrichtigungsereignisse konfigurieren.
-7. Fertigstellen. Der erste Import startet sofort.
-
-### Synchronisierung
-
-- Standardintervall: **5 Minuten** (einstellbar 1–1440).
-- Erster Import: standardmäßig **30 Tage** (einstellbar 1–365).
-- Gmail-Suchanfrage ist konfigurierbar; Standard ist bewusst breit und wird lokal präzisiert.
-- Gelesene und archivierte E-Mails werden berücksichtigt. Es wird nicht `is:unread` verwendet.
-- Manuelle Synchronisierung: Button `button.package_tracker_sync` oder Service `package_tracker.sync`.
-- Obergrenze pro Sync: standardmäßig 1000 Nachrichten. Bei Überschreitung wird geloggt; Obergrenze bzw. Suchanfrage anpassen.
-- Token-Erneuerung erfolgt automatisch über Home Assistant. Bei entzogenem Zugriff startet die Integration einen Reauth-Flow und erstellt ein Repair-Issue.
+> **Security:** the client secret is stored in the Home Assistant config entry (as with other OAuth integrations). Tokens are managed by Home Assistant and refreshed automatically. Secrets are redacted in diagnostics.
 
 ---
 
-## Optionen
+## Set up the integration
 
-**Einstellungen → Geräte & Dienste → Package Tracker → Konfigurieren**
+1. **Settings → Devices & services → Add integration → Package Tracker**.
+2. Enter the client ID and client secret.
+3. Click **Next** and complete the Google login in the popup.
+4. Grant **read-only Gmail access**. Without this scope the setup stops with a clear message.
+5. Choose the sync interval and initial import period.
+6. Optionally configure a `notify` service and notification events immediately.
+7. Finish. The initial import starts immediately.
 
-| Option | Standard | Bedeutung |
+### Synchronisation
+
+- Default interval: **5 minutes** (configurable 1–1440).
+- Initial import: **30 days** by default (configurable 1–365).
+- Gmail search query is configurable; the default is deliberately broad and refined locally.
+- Read and archived e-mails are included. `is:unread` is not used.
+- Manual sync: `button.package_tracker_sync` or service `package_tracker.sync`.
+- Per-sync limit: 1000 messages by default. If exceeded, a warning is logged; adjust the limit or the search query.
+- Tokens refresh automatically through Home Assistant. If access is revoked, the integration starts a reauth flow and creates a repair issue.
+
+---
+
+## Options
+
+**Settings → Devices & services → Package Tracker → Configure**
+
+| Option | Default | Meaning |
 |---|---:|---|
-| Synchronisierungsintervall | 5 min | Gmail-Abruf; 1–1440 Minuten |
-| Erster Import | 30 Tage | Zeitfenster des initialen Abrufs |
-| Gmail-Suchanfrage | breite Standardabfrage | serverseitiger Gmail-Filter; lokale Analyse bleibt maßgeblich |
-| Max. Nachrichten pro Sync | 1000 | Schutz vor Überlastung |
-| E-Mail-Betreffzeilen speichern | an | nur Betreff-Metadaten; Inhalte werden nie gespeichert |
-| Aufbewahrung zugestellter Pakete | 90 Tage | automatische Bereinigung; `0` = dauerhaft |
-| Benachrichtigungsdienst | leer | z. B. `mobile_app_handy` oder `notify.mobile_app_handy` |
-| Benachrichtigungsereignisse | u. a. Zustellung, Verspätung | Mehrfachauswahl |
-| Tracking-Anbieter | deaktiviert | `dhl_unified` oder `custom_json` |
-| Tracking-Intervall | 60 min | `0` = aus |
-| Tracking-API-Key | leer | für DHL Unified API |
-| Tracking-URL / Header / JSON-Pfade | leer/Defaults | für eigenen JSON-Endpunkt |
+| Sync interval | 5 min | Gmail polling; 1–1440 minutes |
+| Initial import | 30 days | Initial import window |
+| Gmail search query | broad default | server-side Gmail filter; local analysis is authoritative |
+| Max messages per sync | 1000 | protects against overload |
+| Store e-mail subjects | on | subject metadata only; bodies are never stored |
+| Keep delivered parcels | 90 days | automatic cleanup; `0` = forever |
+| Order placeholders | 7 days | order confirmations within this window are shown as active parcels; older orders are stored but only appear when a shipping/tracking e-mail arrives; `0` = unlimited |
+| Notification service | empty | e.g. `mobile_app_phone` or `notify.mobile_app_phone` |
+| Notification events | delivery, delay, pickup, … | multi-select |
+| Tracking provider | disabled | `dhl_unified` or `custom_json` |
+| Tracking interval | 60 min | `0` = off |
+| Tracking API key | empty | for DHL Unified API |
+| Tracking URL / headers / JSON paths | empty/defaults | for custom JSON endpoint |
 
-Änderungen werden ohne Neustart übernommen. Ein neues Sync-Intervall greift sofort.
+Changes are applied without a restart. A new sync interval takes effect immediately.
 
 ---
 
-## Dashboard-Karte
+## Dashboard card
 
-### Karte hinzufügen
+### Add the card
 
-Dashboard bearbeiten → **Karte hinzufügen** → manuell:
+Edit the dashboard → **Add card** → manual:
 
 ```yaml
 type: custom:package-tracker-card
 ```
 
-Oder den visuellen Editor verwenden. Die Karte wird automatisch als Ressource geladen.
+Or use the visual editor. The card is loaded automatically as a resource.
 
-### Vollständige YAML-Konfiguration
+### Full YAML configuration
 
 ```yaml
 type: custom:package-tracker-card
-title: Pakete
+title: Parcels
 max_packages: 12
 show_delivered: false
 show_images: true
@@ -276,89 +284,91 @@ show_search: true
 show_last_sync: true
 ```
 
-| Option | Typ | Standard | Beschreibung |
+| Option | Type | Default | Description |
 |---|---|---|---|
-| `title` | string | `Pakete` | Überschrift |
-| `max_packages` | number | 24 | maximal angezeigte Pakete |
-| `show_delivered` | boolean | false | zugestellte Pakete standardmäßig anzeigen |
-| `show_images` | boolean | true | Produktbilder aus E-Mails anzeigen, sofern vorhanden |
-| `show_delivery_dates` | boolean | true | Lieferdatum/Zeitfenster auf Karten |
-| `compact` | boolean | false | kompakte Listenansicht |
+| `title` | string | localised “Parcels” | heading |
+| `max_packages` | number | 24 | maximum number of parcels shown |
+| `show_delivered` | boolean | false | show delivered parcels by default |
+| `show_images` | boolean | true | show product images from e-mails when available |
+| `show_delivery_dates` | boolean | true | show delivery date/time window on cards |
+| `compact` | boolean | false | compact list layout |
 | `default_filter` | string | `all` | `all`, `transit`, `today`, `delivered`, `delayed`, `pickup` |
 | `sort_by` | string | `expected` | `expected`, `carrier`, `merchant`, `status` |
-| `show_stats` | boolean | true | Statistikleiste anzeigen |
-| `show_search` | boolean | true | Suchfeld anzeigen |
-| `show_last_sync` | boolean | true | letzten Gmail-Sync im Kopf anzeigen |
+| `show_stats` | boolean | true | show the statistics bar |
+| `show_search` | boolean | true | show the search field |
+| `show_last_sync` | boolean | true | show the last Gmail sync in the header |
 
-### Bedienung
+### Interaction
 
-- **Statistik-Kacheln**: Unterwegs, Heute, Zugestellt, Nächste Lieferung. Klick setzt den Filter.
-- **Filter-Chips**: Alle, Unterwegs, Heute, Zugestellt, Verspätet, Abholbereit.
-- **Suche**: Händler, Produkt, Sendungsnummer, Bestellnummer, Paketdienst.
-- **Sortierung**: Lieferdatum, Paketdienst, Händler, Status.
-- **Paket anklicken**: Detailansicht mit Bestellinformationen, Produkt, Sendungsnummer, Tracking-Link, kompletter Statushistorie, E-Mail-Metadaten, weiteren Sendungen der Bestellung und optionalem Tracking.
-- **Tastatur**: Karten sind per Tab/Enter/Space bedienbar; Escape schließt die Detailansicht.
-- **Responsive**: Smartphone (eine Spalte, Detail als Bottom-Sheet), Tablet und Desktop (Kachelraster).
-- **Light/Dark**: ausschließlich Home-Assistant-CSS-Variablen, keine festen Hintergründe.
-- **Keine Beispieldaten**: Im leeren Zustand erscheint ein Sync-Hinweis; im Fehlerfall eine Retry-Aktion.
+- **Statistics tiles:** in transit, today, delivered, next delivery. Click to filter or open the next parcel.
+- **Filter chips:** all, in transit, today, delivered, delayed, ready for pickup.
+- **Search:** merchant, product, tracking number, order number, carrier.
+- **Sorting:** delivery date, carrier, merchant, status.
+- **Click a parcel:** detail view with order data, product, tracking number, tracking link, complete status history, e-mail metadata, other shipments in the order and optional tracking.
+- **Keyboard:** cards are reachable via Tab/Enter/Space; Escape closes the detail sheet.
+- **Responsive:** phone (single column, bottom sheet), tablet and desktop (grid).
+- **Light/dark:** Home Assistant CSS variables only, no hard-coded surfaces.
+- **No sample data:** empty, loading and error states are explicit.
 
-### Datenquelle der Karte
+### Data source
 
-Die Karte lädt zuerst über die WebSocket-API `package_tracker/packages` (vollständiger gemeinsamer Datenbestand inkl. Historie). Ist das nicht verfügbar, fällt sie auf die Attribute von `sensor.package_tracker_packages` und die per-Paket-Sensoren zurück. Updates kommen über das Event `package_tracker_updated`.
+The card first loads through the WebSocket API `package_tracker/packages` (complete shared data set including history). If unavailable, it falls back to the attributes of `sensor.package_tracker_packages` and the per-parcel sensors. Updates arrive through `package_tracker_updated`.
 
-### Eigene Dashboard-Beispiele
+### Example configurations
 
 ```yaml
-# Kompakt, nur aktive Pakete
+# Compact, active parcels only
 type: custom:package-tracker-card
-title: Unterwegs
+title: In transit
 compact: true
 default_filter: transit
 max_packages: 6
 show_stats: false
 
-# Tagesübersicht inkl. zugestellter Pakete
+# Daily overview including delivered parcels
 type: custom:package-tracker-card
 default_filter: today
 show_delivered: true
 show_images: true
 ```
 
+More examples: [docs/dashboard.yaml](docs/dashboard.yaml).
+
 ---
 
-## Sensoren und Entities
+## Sensors and entities
 
-Alle Aggregat-Entities hängen am Gerät **Package Tracker**.
+All aggregate entities belong to the device **Package Tracker**.
 
-| Entity | State | Wichtige Attribute |
+| Entity | State | Important attributes |
 |---|---|---|
-| `sensor.package_tracker_packages` | Anzahl aktiver Pakete | `packages`, `counts`, `gmail`, `sync`, `updated_at` |
-| `sensor.package_tracker_deliveries_today` | Lieferungen heute | `packages`, `count` |
-| `sensor.package_tracker_next_delivery` | nächstes Lieferdatum (`date`) | `package`, `product_name`, `merchant`, `carrier`, `delivery_window`, `tracking_url` |
-| `sensor.package_tracker_delivered_today` | heute zugestellt | `packages`, `count` |
-| `sensor.package_tracker_packages_in_transit` | Pakete unterwegs | `packages`, `count` |
-| `sensor.package_tracker_delayed` | verspätete Pakete | `packages`, `count` |
-| `sensor.package_tracker_last_sync` | Zeitpunkt des letzten Syncs | `emails_processed`, `connected`, `account` (standardmäßig deaktiviert) |
+| `sensor.package_tracker_packages` | number of active parcels | `packages`, `counts`, `gmail`, `sync`, `updated_at` |
+| `sensor.package_tracker_deliveries_today` | deliveries today | `packages`, `count` |
+| `sensor.package_tracker_next_delivery` | next delivery date (`date`) | `package`, `product_name`, `merchant`, `carrier`, `delivery_window`, `tracking_url` |
+| `sensor.package_tracker_delivered_today` | delivered today | `packages`, `count` |
+| `sensor.package_tracker_packages_in_transit` | parcels in transit | `packages`, `count` |
+| `sensor.package_tracker_delayed` | delayed parcels | `packages`, `count` |
+| `sensor.package_tracker_last_sync` | last sync timestamp | `emails_processed`, `connected`, `account` (disabled by default) |
 
-Zusätzlich:
+Additional entities:
 
-| Entity | Bedeutung |
+| Entity | Meaning |
 |---|---|
-| `binary_sensor.package_tracker_delivery_today` | Lieferung für heute erwartet |
-| `binary_sensor.package_tracker_package_out_for_delivery` | mindestens ein Paket in Zustellung |
-| `binary_sensor.package_tracker_delayed` | mindestens ein Paket verspätet |
-| `binary_sensor.package_tracker_gmail_connected` | Gmail-Konto verbunden (diagnostisch) |
-| `button.package_tracker_sync` | manuelle Gmail-Synchronisierung |
-| `button.package_tracker_refresh_tracking` | optionales Tracking aktualisieren |
-| `sensor.package_tracker_package_<händler>_<id>` | ein Sensor pro erkanntem Paket |
+| `binary_sensor.package_tracker_delivery_today` | delivery expected today |
+| `binary_sensor.package_tracker_package_out_for_delivery` | at least one parcel out for delivery |
+| `binary_sensor.package_tracker_delayed` | at least one delayed parcel |
+| `binary_sensor.package_tracker_gmail_connected` | Gmail account connected (diagnostic) |
+| `button.package_tracker_sync` | manual Gmail sync |
+| `button.package_tracker_refresh_tracking` | refresh optional tracking |
+| `sensor.package_tracker_package_<merchant>_<id>` | one sensor per recognised parcel |
 
-Der per-Paket-Sensor hat den Status als State und u. a. diese Attribute:
+The per-parcel sensor uses the status as its state and exposes:
 `package_id`, `merchant`, `carrier`, `carrier_name`, `product_name`, `product_names`, `product_image`, `order_number`, `tracking_number`, `tracking_url`, `order_date`, `shipped_date`, `expected_delivery`, `delivery_window`, `actual_delivery`, `status_label`, `status_history`, `emails`, `order`, `siblings`, `tracking`, `completed`, `notes`.
 
-Beispiel für Templates:
+Template examples:
 
 ```jinja
-{{ states('sensor.package_tracker_packages') }} Pakete aktiv
+{{ states('sensor.package_tracker_packages') }} active parcels
 {{ state_attr('sensor.package_tracker_next_delivery', 'product_name') }}
 {{ state_attr('sensor.package_tracker_next_delivery', 'delivery_window') }}
 ```
@@ -367,29 +377,29 @@ Beispiel für Templates:
 
 ## Events
 
-Jedes Ereignis enthält die relevanten Paketdaten, u. a. `package_id`, `merchant`, `carrier`, `carrier_name`, `product_name`, `product_names`, `order_number`, `tracking_number`, `tracking_url`, `status`, `previous_status`, `expected_delivery`, `delivery_window`, `actual_delivery`, `email_ids`, `entity_id`, `source` und `timestamp`.
+Every event contains relevant parcel data, including `package_id`, `merchant`, `carrier`, `carrier_name`, `product_name`, `product_names`, `order_number`, `tracking_number`, `tracking_url`, `status`, `previous_status`, `expected_delivery`, `delivery_window`, `actual_delivery`, `email_ids`, `entity_id`, `source` and `timestamp`.
 
-| Event | Auslöser |
+| Event | Trigger |
 |---|---|
-| `package_tracker_package_found` | neues Paket angelegt |
-| `package_tracker_package_ordered` | Status `ordered` |
-| `package_tracker_package_shipped` | Status `shipped` |
-| `package_tracker_package_in_transit` | Status `in_transit` |
-| `package_tracker_package_out_for_delivery` | Status `out_for_delivery` |
-| `package_tracker_package_delivered` | Status `delivered` |
-| `package_tracker_package_delayed` | Status `delayed` |
-| `package_tracker_package_ready_for_pickup` | Status `ready_for_pickup` |
-| `package_tracker_package_returned` | Status `returned` |
-| `package_tracker_package_cancelled` | Status `cancelled` |
-| `package_tracker_updated` | Datenbestand geändert (für Dashboards) |
+| `package_tracker_package_found` | new parcel created |
+| `package_tracker_package_ordered` | status `ordered` |
+| `package_tracker_package_shipped` | status `shipped` |
+| `package_tracker_package_in_transit` | status `in_transit` |
+| `package_tracker_package_out_for_delivery` | status `out_for_delivery` |
+| `package_tracker_package_delivered` | status `delivered` |
+| `package_tracker_package_delayed` | status `delayed` |
+| `package_tracker_package_ready_for_pickup` | status `ready_for_pickup` |
+| `package_tracker_package_returned` | status `returned` |
+| `package_tracker_package_cancelled` | status `cancelled` |
+| `package_tracker_updated` | data changed (for dashboards) |
 
-Events werden nur bei echten Statusänderungen bzw. beim Anlegen ausgelöst. Wiederholte identische E-Mails oder identische Statusmeldungen erzeugen keine Duplikate.
+Events fire only on real status changes or when a parcel is created. Repeated identical e-mails or status messages do not create duplicates.
 
 ---
 
-## Services / Actions
+## Services / actions
 
-Alle Services sind auch im Automation-Editor unter **Package Tracker** verfügbar. `config_entry_id` ist optional und nur bei mehreren Gmail-Konten nötig.
+All services are available in the automation editor under **Package Tracker**. `config_entry_id` is optional and only needed with multiple Gmail accounts.
 
 ### `package_tracker.sync`
 
@@ -399,7 +409,7 @@ action: package_tracker.sync
 
 ### `package_tracker.refresh`
 
-Baut die Paketübersicht aus den gespeicherten Daten neu auf und benachrichtigt das Dashboard über `package_tracker_updated`, ohne Gmail abzurufen.
+Rebuilds the overview from stored data and notifies the dashboard via `package_tracker_updated`, without fetching Gmail.
 
 ```yaml
 action: package_tracker.refresh
@@ -419,7 +429,7 @@ data:
 action: package_tracker.mark_delivered
 data:
   package_id: "pkg_..."
-  delivered_at: "2026-11-26"
+  delivered_at: "2026-11-27"
 ```
 
 ### `package_tracker.mark_completed`
@@ -462,11 +472,11 @@ data:
   reset_sync: false
 ```
 
-`reset_sync: true` setzt zusätzlich den Gmail-Wasserstand zurück; ältere E-Mails werden beim nächsten Sync erneut importiert.
+`reset_sync: true` also resets the Gmail watermark; older e-mails are imported again on the next sync.
 
 ### `package_tracker.disconnect_account`
 
-Entfernt den Config-Entry, widerruft das Google-Token (best effort) und löscht die lokale Store-Datei.
+Removes the config entry, revokes the Google token (best effort) and deletes the local Store file.
 
 ```yaml
 action: package_tracker.disconnect_account
@@ -474,123 +484,125 @@ action: package_tracker.disconnect_account
 
 ### `package_tracker.get_packages`
 
-Liefert eine Antwort (Response) für Skripte/Templates:
+Returns a response for scripts/templates:
 
 ```yaml
 action: package_tracker.get_packages
 data:
   status: in_transit
-response_variable: pakete
+response_variable: parcels
 ```
 
 ---
 
-## Benachrichtigungen
+## Notifications
 
-Die Integration nutzt ausschließlich die normale Home-Assistant-`notify`-Architektur. Es gibt keine Bindung an einen bestimmten Push-Anbieter.
+The integration uses the normal Home Assistant `notify` architecture. There is no binding to a specific push provider.
 
-### Einrichtung
+### Setup
 
-1. Einen funktionierenden Notify-Dienst einrichten (z. B. Home-Assistant-Companion-App).
-2. In den Integration-Optionen den Dienstnamen ohne `notify.` eintragen, z. B. `mobile_app_handy`.
-3. Ereignisse auswählen, z. B. „Paket in Zustellung“, „Paket zugestellt“, „Paket verspätet“, „Paket abholbereit“.
+1. Configure a working notify service (e.g. the Home Assistant Companion app).
+2. In the integration options, enter the service name without `notify.`, e.g. `mobile_app_phone`.
+3. Select the events to notify, e.g. “Parcel out for delivery”, “Parcel delivered”, “Parcel delayed”, “Parcel ready for pickup”.
 
-### Duplikatvermeidung
+### Duplicate prevention
 
-- Eine Benachrichtigung wird nur bei einer echten Statusänderung ausgelöst.
-- Bereits verarbeitete Gmail-IDs werden persistent gespeichert.
-- Zusätzlich wird pro Paket + Status ein Sendezeitpunkt gespeichert; identische Meldungen innerhalb von 12 Stunden werden unterdrückt.
-- Fehlt der konfigurierte Notify-Dienst, wird gewarnt und nichts gesendet.
+- A notification is only triggered on a real status change.
+- Already processed Gmail IDs are persisted.
+- A send timestamp is stored per parcel + status; identical messages within 12 hours are suppressed.
+- If the configured notify service is missing, a warning is logged and nothing is sent.
+- When one sync catches up on several status changes for the same parcel, only the latest eligible change is notified.
 
-### Beispielnachricht
+### Example message
 
-> **Paket ist in Zustellung**  
-> Dein Paket ist unterwegs!
+> **Parcel out for delivery**  
+> Your parcel is on its way!
 >
-> „Logitech MX Master 4“ von Amazon wird heute voraussichtlich zwischen 14:00–18:00 Uhr zugestellt.
+> “Logitech MX Master 4” from Amazon is expected today.
 >
-> Paketdienst: DHL  
-> Sendungsnummer: 00340434161094000000
+> Delivery window: 14:00–18:00 Uhr  
+> Carrier: DHL  
+> Tracking number: 00340434161094000000
 
-Bei Companion-Apps werden zusätzlich `tag`, `group`, `url` und `clickAction` mit dem Tracking-Link gesetzt.
+For Companion apps, `tag`, `group`, `url` and `clickAction` are set with the tracking link. Messages are English by default and German when Home Assistant is set to German.
 
-### Alternative: eigene Automationen
+### Alternative: your own automations
 
-Wer volle Kontrolle über Texte und Empfänger möchte, lässt den Notify-Dienst in den Optionen leer und reagiert auf die Events. Beispiele stehen in [docs/automations.md](docs/automations.md).
+If you want full control over text and recipients, leave the notify service empty and react to events. Examples: [docs/automations.md](docs/automations.md).
 
 ---
 
-## Automationen und Smart-Home-Integration
+## Automations and smart-home integration
 
-Die Integration stellt native **Device-Trigger**, **Device-Conditions** und **Device-Actions** am Gerät „Package Tracker“ bereit.
+The integration provides native **device triggers**, **device conditions** and **device actions** on the device “Package Tracker”.
 
-### Trigger
+### Triggers
 
-- Paket erkannt
-- Paket bestellt
-- Paket versendet
-- Paket unterwegs
-- Paket in Zustellung
-- Paket zugestellt
-- Paket verspätet
-- Paket abholbereit
-- Paket retourniert
-- Bestellung storniert
-- Paketstatus geändert (optional mit `package_id`-Filter)
+- parcel detected
+- parcel ordered
+- parcel shipped
+- parcel in transit
+- parcel out for delivery
+- parcel delivered
+- parcel delayed
+- parcel ready for pickup
+- parcel returned
+- order cancelled
+- parcel status changed (optional `package_id` filter)
 
-### Bedingungen
+### Conditions
 
-- Paket hat Status …
-- Paketdienst ist …
-- Händler ist …
-- Produkt enthält …
-- Für heute wird eine Lieferung erwartet
-- Ein Paket existiert
+- parcel has status …
+- carrier is …
+- merchant is …
+- product contains …
+- a delivery is expected today
+- a parcel exists
 
-### Aktionen
+### Actions
 
-- Gmail jetzt synchronisieren
-- Tracking aktualisieren
-- Paket als zugestellt markieren
-- Paket als erledigt markieren
-- Paket löschen
+- sync Gmail now
+- refresh tracking
+- mark parcel as delivered
+- mark parcel as completed
+- delete parcel
 
-### Beispiel: Push bei Zustellung
+### Example: push on delivery
 
 ```yaml
-alias: Paket zugestellt – Push
+alias: Parcel delivered – push
 trigger:
   - platform: event
     event_type: package_tracker_package_delivered
 action:
-  - action: notify.mobile_app_handy
+  - action: notify.mobile_app_phone
     data:
-      title: Paket zugestellt
+      title: Parcel delivered
       message: >-
-        {{ trigger.event.data.product_name }} von
-        {{ trigger.event.data.merchant }} wurde zugestellt.
+        {{ trigger.event.data.product_name }} from
+        {{ trigger.event.data.merchant }} was delivered.
 ```
 
-### Beispiel: Lampe bei Zustellung
+### Example: light on out for delivery
 
 ```yaml
-alias: Paket in Zustellung – Licht
+alias: Parcel out for delivery – hallway light
 trigger:
   - platform: event
     event_type: package_tracker_package_out_for_delivery
 action:
   - action: light.turn_on
     target:
-      entity_id: light.flur
+      entity_id: light.hallway
     data:
       brightness_pct: 35
       color_name: green
 ```
 
-### Beispiel: Dashboard-Benachrichtigung heute
+### Example: dashboard notification today
 
 ```yaml
-alias: Heute kommt ein Paket
+alias: Delivery today
 trigger:
   - platform: time
     at: "07:30:00"
@@ -601,31 +613,31 @@ condition:
 action:
   - action: persistent_notification.create
     data:
-      title: Lieferung heute
+      title: Delivery today
       message: >-
         {{ state_attr('sensor.package_tracker_next_delivery', 'product_name') }}
-        wird heute erwartet.
+        is expected today.
 ```
 
-Weitere Beispiele: [docs/automations.md](docs/automations.md).
+More examples: [docs/automations.md](docs/automations.md).
 
 ---
 
-## Optional: externes Tracking
+## Optional external tracking
 
-Die Gmail-Daten sind die primäre Quelle. Externes Tracking ist **standardmäßig deaktiviert** und niemals Voraussetzung.
+Gmail data is the primary source. External tracking is **disabled by default** and never a requirement.
 
-### DHL Unified API (offiziell)
+### DHL Unified API (official)
 
-- Kostenlosen API-Key bei [DHL Developer](https://developer.dhl.com/) beantragen.
-- Optionen: Anbieter `dhl_unified`, API-Key eintragen, Intervall setzen.
-- Endpunkt: `https://api-eu.dhl.com/track/shipments`
-- Die Integration speichert Trackingdaten getrennt unter `tracking` am Paket. E-Mail-Fakten (Händler, Produkt, Bestellung, E-Mail-Historie) werden nicht überschrieben. Ein externer Liefertermin ersetzt keinen bereits aus der E-Mail bekannten Termin; er bleibt als `tracking.expected_delivery` separat sichtbar.
-- Fehler (401, 404, 429, 5xx, Timeout) werden am Paket als `tracking.error` gespeichert und beeinträchtigen den Gmail-Sync nicht.
+- Request a free API key at [DHL Developer](https://developer.dhl.com/).
+- Options: provider `dhl_unified`, API key, interval.
+- Endpoint: `https://api-eu.dhl.com/track/shipments`
+- Tracking data is stored separately under `tracking` on the parcel. E-mail facts (merchant, product, order, e-mail history) are not overwritten. An external delivery estimate does not replace a known e-mail date; it remains visible as `tracking.expected_delivery`.
+- Errors (401, 404, 429, 5xx, timeout) are stored as `tracking.error` and do not affect Gmail sync.
 
-### Eigener JSON-Endpunkt
+### Custom JSON endpoint
 
-Optionen: `custom_json`, URL-Vorlage mit `{tracking}`, optional Header/Token sowie JSON-Pfade. Erwartetes Beispiel:
+Options: `custom_json`, URL template containing `{tracking}`, optional header/token and JSON paths. Expected response example:
 
 ```json
 {
@@ -634,141 +646,155 @@ Optionen: `custom_json`, URL-Vorlage mit `{tracking}`, optional Header/Token sow
   "events": [
     {
       "timestamp": "2026-11-26T09:00:00+00:00",
-      "description": "Im Paketzentrum angekommen"
+      "description": "Arrived at the parcel centre"
     }
   ]
 }
 ```
 
-- Die Statuswerte werden anhand deutscher/englischer Schlüsselwörter auf die internen Status abgebildet.
-- Pfade werden mit Punktnotation aufgelöst (`data.history`, `events.0.time`).
-- Es werden ausschließlich GET-Anfragen gestellt; kein JavaScript, kein Scraping.
-- Vertrag und Sicherheitshinweise: [docs/tracking-provider.md](docs/tracking-provider.md).
+- Status values are mapped using German/English keywords.
+- Paths use dot notation (`data.history`, `events.0.time`).
+- Only GET requests are made; no JavaScript, no scraping.
+- Contract and security notes: [docs/tracking-provider.md](docs/tracking-provider.md).
 
 ---
 
-## Datenschutz und Sicherheit
+## Privacy and security
 
-- **Nur lesender Zugriff:** `https://www.googleapis.com/auth/gmail.readonly`.
-- **Keine Gmail-Passwörter:** Anmeldung ausschließlich über OAuth2; Home Assistant speichert Access-/Refresh-Token im Config-Entry und erneuert sie automatisch.
-- **Lokale Analyse:** Der Parser läuft vollständig in Home Assistant. Es werden keine E-Mail-Inhalte an externe Dienste, KI-APIs oder Werbenetzwerke gesendet.
-- **Keine Body-Speicherung:** E-Mail-Text und HTML werden nur im Arbeitsspeicher verarbeitet und danach verworfen. Gespeichert werden extrahierte Paketdaten und E-Mail-Metadaten (ID, Zeitpunkt, optional Betreff/Absenderdomain, erkannte Art).
-- **Betreffzeilen abschaltbar:** Option „E-Mail-Betreffzeilen speichern“ deaktivieren; bereits gespeicherte Betreffzeilen werden entfernt.
-- **Diagnostics:** Tokens, Client-Secret, API-Keys, E-Mail-Adressen und Sendungsnummern werden geschwärzt; E-Mail-Inhalte sind nie enthalten.
-- **Löschen:** `package_tracker.delete_all_data` löscht Pakete/Bestellungen; `package_tracker.disconnect_account` entfernt den Eintrag, widerruft das Token und löscht die Store-Datei.
-- **Aufbewahrung:** standardmäßig 90 Tage für terminale Pakete; `0` = dauerhaft.
-- **Externe Produktbilder:** Bilder werden aus E-Mails extrahiert und direkt vom Händler-CDN geladen. Dabei wird die IP des Browsers an den Händler/CDN übermittelt. Bilder lassen sich in den Kartenoptionen deaktivieren.
-- **Tracking-Header:** Eigene Header/Keys werden im Config-Entry gespeichert und in Diagnostics geschwärzt.
+- **Read-only access:** `https://www.googleapis.com/auth/gmail.readonly`.
+- **No Gmail password:** login is OAuth2 only; Home Assistant stores access/refresh tokens in the config entry and refreshes them automatically.
+- **Local analysis:** the parser runs entirely inside Home Assistant. No e-mail content is sent to external services, AI APIs or advertising networks.
+- **No body storage:** e-mail text and HTML are processed in memory and discarded. Extracted parcel data and e-mail metadata (ID, timestamp, optional subject/sender domain, detected type) are stored.
+- **Subjects can be disabled:** turn off “Store e-mail subjects”; existing subjects are removed.
+- **Diagnostics:** tokens, client secret, API keys, e-mail addresses and tracking numbers are redacted; e-mail bodies are never included.
+- **Deletion:** `package_tracker.delete_all_data` removes parcels/orders; `package_tracker.disconnect_account` removes the entry, revokes the token and deletes the Store file.
+- **Retention:** default 90 days for terminal parcels; `0` = forever.
+- **External product images:** images are extracted from e-mails and loaded directly from the merchant CDN. This exposes your browser IP to that CDN. Disable images in the card options if undesired.
+- **Tracking headers:** custom headers/keys are stored in the config entry and redacted in diagnostics.
 
 ---
 
-## Fehlerbehebung
+## Troubleshooting
 
-### „No public HTTPS URL is available“ / `no_url_available`
+### “No public HTTPS URL is available” / `no_url_available`
 
-- My Home Assistant einrichten **oder** eine externe HTTPS-URL in Home Assistant konfigurieren.
-- Die Redirect-URI in Google Cloud muss exakt der im Formular angezeigten URI entsprechen.
+- Set up My Home Assistant **or** configure an external HTTPS URL in Home Assistant.
+- The redirect URI in Google Cloud must match the URI shown in the form exactly.
 
-### Google meldet `redirect_uri_mismatch`
+### Google reports `redirect_uri_mismatch`
 
-- URI in Google Cloud korrigieren:
+- Correct the URI in Google Cloud:
   - My Home Assistant: `https://my.home-assistant.io/redirect/oauth`
-  - Eigene URL: `https://<host>/auth/external/callback`
-- Kein trailing slash, exaktes HTTPS.
+  - Own URL: `https://<host>/auth/external/callback`
+- No trailing slash, exact HTTPS.
 
 ### `invalid_client` / `invalid_client_id`
 
-- Client-ID muss auf `.apps.googleusercontent.com` enden.
-- Client-Secret vollständig kopieren (keine Leerzeichen).
+- The client ID must end with `.apps.googleusercontent.com`.
+- Copy the client secret completely (no spaces).
 
-### `missing_scope` / Zugriff verweigert
+### `missing_scope` / access denied
 
-- Beim Google-Zustimmungsbildschirm die Gmail-Leseberechtigung erlauben.
-- Falls die App im Testmodus ist: Konto als Testnutzer hinzufügen.
-- Bei Änderungen der Scopes ggf. den App-Zugriff im Google-Konto entfernen und neu verbinden.
+- Grant Gmail read access on the Google consent screen.
+- If the app is in testing mode, add the account as a test user.
+- After scope changes, remove the app’s access in your Google account and reconnect.
 
 ### `no_refresh_token`
 
-- In der Google-App wurde bereits zugestimmt, ohne dass Google ein neues Refresh-Token ausstellt.
-- App-Zugriff im Google-Konto entfernen (Sicherheit → Apps mit Kontozugriff) und Einrichtung wiederholen.
-- Alternativ Reauth über das Repair-Issue.
+- Google did not issue a new refresh token because consent was already granted.
+- Remove the app’s access in your Google account and repeat setup, or use the repair issue to reauthenticate.
 
-### Repair-Issue „Gmail-Autorisierung fehlgeschlagen“
+### Repair issue “Gmail authorization failed”
 
-- Auf **Beheben** klicken und erneut anmelden. Der Reauth-Flow aktualisiert das Token, ohne Paketdaten zu verlieren.
+- Click **Fix** and sign in again. The reauth flow updates the token without losing parcel data.
 
-### Keine Pakete werden erkannt
+### No parcels are detected
 
-- Prüfen, ob die Mails im gewählten Zeitraum liegen (`initial_sync_days`).
-- Gmail-Suchanfrage zu eng? Standardabfrage verwenden oder Händler/Paketdienst ergänzen.
-- Manuell synchronisieren (`button.package_tracker_sync`).
-- Debug-Logging für `custom_components.package_tracker` aktivieren; geloggt werden nur Message-IDs, Fehlertypen und Zähler, keine Inhalte.
-- Die Erkennung ist heuristisch. Neue Händlervorlagen können ergänzt werden (siehe Entwicklung).
+- Check whether the e-mails are within the selected period (`initial_sync_days`).
+- Is the Gmail search query too narrow? Use the default or add merchants/carriers.
+- Trigger a manual sync (`button.package_tracker_sync`).
+- Enable debug logging for `custom_components.package_tracker`; only message IDs, error types and counts are logged, no content.
+- Recognition is heuristic. New merchant templates can be added (see development).
 
-### Zu viele Nachrichten / Sync unvollständig
+### Too many messages / incomplete sync
 
-- `max_messages_per_sync` erhöhen (max. 2000) oder Importzeitraum reduzieren.
-- Log-Warnung „Gmail returned more messages than the configured limit“ beachten.
+- Increase `max_messages_per_sync` (max 2000) or reduce the import period.
+- Watch for the log warning “Gmail returned more messages than the configured limit”.
 
-### Gmail Rate Limit (HTTP 429)
+### Gmail rate limit (HTTP 429)
 
-- Sync-Intervall erhöhen.
-- Gmail API hat Quoten pro Minute/Tag; die Integration versucht es beim nächsten Intervall erneut.
+- Increase the sync interval.
+- The Gmail API has per-minute/daily quotas; the integration retries on the next interval.
 
-### Karte erscheint nicht
+### Card does not appear
 
-- Integration neu laden bzw. Home Assistant neu starten.
-- Browser-Cache leeren.
-- Prüfen, ob `/package_tracker_static/package-tracker-card.js` erreichbar ist.
-- Alternativ Ressource manuell als JavaScript-Modul eintragen.
-- In HACS nach dem Update die Frontend-Ressource neu laden.
+- Reload the integration or restart Home Assistant.
+- Clear the browser cache.
+- Check that `/package_tracker_static/package-tracker-card.js` is reachable.
+- Alternatively add the resource manually as a JavaScript module.
+- After a HACS update, reload the frontend resource.
 
-### Produktbilder fehlen
+### Product images are missing
 
-- Nicht jede E-Mail enthält ein Produktbild.
-- Bilder können durch Datenschutz-/Tracking-Filter des Händlers blockiert sein.
-- `http://`-Bilder werden von HTTPS-Dashboards blockiert; die Karte zeigt dann den Händler-Monogramm-Fallback.
-- `show_images: false` deaktiviert Bilder vollständig.
+- Not every e-mail contains a product image.
+- Images may be blocked by the merchant’s privacy/tracking filters.
+- `http://` images are blocked by HTTPS dashboards; the card then shows a merchant monogram fallback.
+- `show_images: false` disables images completely.
 
-### „Doppelte“ Pakete
+### Old orders or products from invoice/review mails appear
 
-- Meist fehlt eine gemeinsame Sendungs- oder Bestellnummer. Die Integration führt nur bei eindeutigen Signalen zusammen.
-- Paket manuell zusammenführen ist derzeit nicht als Service vorhanden; Trackingnummer/Bestellnummer über `update_package` korrigieren oder eines der Pakete löschen.
-- Bei wiederholten Fällen Händler + Beispielvorlage (anonymisiert) melden.
+- Invoice, review, newsletter and coupon mails are rejected by subject and sender address, even if they contain an order number.
+- Order confirmations are only shown as active parcels within the configured **order placeholder** period (default: 7 days). Older orders are retained for later shipping matching.
+- Existing bad imports must be cleared once:
 
-### Zeitzone / „Heute“ stimmt nicht
+```yaml
+action: package_tracker.delete_all_data
+data:
+  confirm: true
+  reset_sync: true
+```
 
-- Die Integration verwendet die Home-Assistant-Zeitzone. Lieferdaten aus E-Mails sind Datumswerte ohne Uhrzeit; Zeitfenster werden als Text angezeigt.
-- Prüfe **Einstellungen → System → Allgemein → Zeitzone**.
+Then call `package_tracker.sync`. With `reset_sync: true`, the Gmail period is imported again using the stricter filters. Alternatively set the order placeholder to e.g. `3` days or start the card with `default_filter: transit`.
 
-### Mehrere Gmail-Konten
+### “Duplicate” parcels
 
-- Mehrere Config-Einträge werden unterstützt; Services akzeptieren `config_entry_id`.
-- Entity-IDs des zweiten Kontos erhalten ggf. einen Suffix. Die Karte führt standardmäßig alle Konten zusammen; per WebSocket/Service kann ein Konto gefiltert werden.
-- Für die meisten Nutzer ist ein Konto empfehlenswert.
+- A shared tracking or order number is usually missing. The integration only merges on unambiguous signals.
+- Correct the tracking/order number with `update_package`, or delete one of the parcels.
+- Report recurring cases with an anonymised example.
+
+### Time zone / “today” is wrong
+
+- The integration uses the Home Assistant time zone. Delivery dates from e-mails are date values; time windows are displayed as text.
+- Check **Settings → System → General → Time zone**.
+
+### Multiple Gmail accounts
+
+- Multiple config entries are supported; services accept `config_entry_id`.
+- Entity IDs of the second account may get a suffix. The card merges all accounts by default; one account can be filtered via WebSocket/service.
+- One account is recommended for most users.
 
 ---
 
-## Grenzen und bewusste Entscheidungen
+## Limitations and design decisions
 
-1. **E-Mail-Heuristik statt Garantie:** Händler ändern Vorlagen. Die Integration kombiniert Absender, Betreff, Text, HTML, Links, Produkt- und Trackingmuster, um Fehlklassifikationen zu minimieren. 100 % Abdeckung ist ohne offizielle Händler-APIs nicht möglich.
-2. **Keine erfundenen Daten:** Wenn keine Sendungsnummer, kein Termin oder kein Produktbild erkannt wird, bleibt das Feld leer. Die Karte zeigt „Termin folgt“ bzw. den Händler-Fallback.
-3. **Tracking-Links sind Komfort:** Sie führen zu offiziellen Seiten der Paketdienste. Amazon-Logistics-Links können eine Amazon-Anmeldung verlangen.
-4. **Keine universelle kostenlose Tracking-API:** Deshalb ist externes Tracking optional. DHL Unified API ist offiziell, aber nicht verpflichtend; eigene Endpunkte sind dokumentiert.
-5. **Zeitfenster sind Text:** Aus E-Mails extrahierte Fenster werden angezeigt, aber nicht als garantierte Zustellzeit interpretiert.
-6. **Google-Verifizierung:** Der `gmail.readonly`-Scope gilt als sensibel. Für dauerhaften Betrieb außerhalb von Testnutzern kann Google eine Verifizierung verlangen.
-7. **Produktbilder sind extern:** Sie werden nicht durch Home Assistant geproxyt.
-8. **Eine Quelle:** Alle Verbraucher (Karte, Sensoren, Events, Services, Automationen) nutzen dieselbe `PackageManager`-Datenstruktur. Es gibt keine separaten Paketlisten.
+1. **E-mail heuristics, not a guarantee:** merchants change templates. The integration combines sender, subject, text, HTML, links, product and tracking patterns to minimise misclassification. 100% coverage is impossible without official merchant APIs.
+2. **No invented data:** if no tracking number, date or product image is recognised, the field stays empty. The card shows “Date pending” or a merchant fallback.
+3. **Tracking links are convenience:** they lead to official carrier pages. Amazon Logistics links may require an Amazon login.
+4. **No universal free tracking API:** external tracking is optional. The DHL Unified API is official but not mandatory; custom endpoints are documented.
+5. **Time windows are text:** extracted windows are shown but not treated as guaranteed delivery times.
+6. **Google verification:** the `gmail.readonly` scope is sensitive. For permanent use outside test users, Google may require verification.
+7. **Product images are external:** they are not proxied through Home Assistant.
+8. **One source of truth:** the card, sensors, events, services and automations all use the same `PackageManager` data structure.
 
 ---
 
-## Entwicklung und Tests
+## Development and tests
 
-### Voraussetzungen
+### Requirements
 
 - Python **3.14**
-- Node.js **22+** (für die Karte)
-- Home Assistant Test-Harness
+- Node.js **22+** (for the card)
+- Home Assistant test harness
 
 ### Backend
 
@@ -780,16 +806,16 @@ pytest -q
 ruff check custom_components tests
 ```
 
-Die Tests decken u. a. ab:
+Tests cover:
 
-- Gmail-MIME-Dekodierung, Paginierung, Fehler-Mapping und OAuth-Probe
-- Parser für Amazon, DHL, DPD, Hermes, GLS, UPS, Amazon Logistics, Retouren, Verspätungen, Marketing-Ausschluss, defektes HTML
-- Zusammenführung: Bestellung → Versand → Tracking → Zustellung, Mehrpaket-Bestellungen, fehlende Trackingnummern, Duplikate, Status-Rückstufungsschutz, Retourenlabel
-- Persistenz und Neustart
-- Sensoren, Entity-IDs, Attribute, Events, Services, Benachrichtigungen (inkl. Duplikatvermeidung)
-- WebSocket-API, Diagnostics-Schwärzung, Device-Trigger/-Conditions/-Actions
-- Config Flow, Reauth, Options Flow
-- Tracking-Provider (DHL/Custom) und Fehlerisolierung
+- Gmail MIME decoding, pagination, error mapping and OAuth probing
+- Parser for Amazon, DHL, DPD, Hermes, GLS, UPS, FedEx, Deutsche Post, Amazon Logistics, returns, delays, marketing exclusion and malformed HTML
+- Merging: order → shipping → tracking → delivery, multi-parcel orders, missing tracking numbers, duplicates, status downgrade protection, return labels, invoice/review rejection, old order placeholders
+- Persistence and restart
+- Sensors, entity IDs, attributes, events, services, notifications (including duplicate prevention and German translation)
+- WebSocket API, diagnostics redaction, device triggers/conditions/actions
+- Config flow, reauth, options flow
+- Tracking providers (DHL/custom) and error isolation
 
 ### Frontend
 
@@ -801,62 +827,61 @@ npx vitest run
 npm run build
 ```
 
-Der Build schreibt nach `custom_components/package_tracker/frontend/package-tracker-card.js`. Dieser Bundle ist eingecheckt, damit HACS keine Build-Toolchain benötigt.
+The build writes to `custom_components/package_tracker/frontend/package-tracker-card.js`. This bundle is committed so HACS does not need a build toolchain.
 
-### Projektstruktur
+### Project structure
 
 ```text
 custom_components/package_tracker/
-├── __init__.py           # Setup, OAuth-Session, Frontend-Ressource
+├── __init__.py           # setup, OAuth session, frontend resource
 ├── manifest.json
-├── config_flow.py        # OAuth, Reauth, Options
+├── config_flow.py        # OAuth, reauth, options
 ├── const.py
-├── coordinator.py        # DataUpdateCoordinator, Sync, Events
-├── gmail_client.py       # offizielle Gmail REST API, MIME
-├── email_parser.py       # lokale Heuristiken
-├── package_manager.py    # zentrale Zusammenführung & Persistenzmodell
+├── coordinator.py        # DataUpdateCoordinator, sync, events
+├── gmail_client.py       # official Gmail REST API, MIME
+├── email_parser.py       # local heuristics
+├── package_manager.py    # central merge & persistence model
 ├── models.py             # Shipment, Order, StatusEvent …
-├── storage.py            # Store-Wrapper
-├── tracking.py           # optionale Provider
-├── notifications.py      # Events + Notify
+├── storage.py            # Store wrapper
+├── tracking.py           # optional providers
+├── notifications.py      # events + notify
 ├── sensor.py / binary_sensor.py / button.py
 ├── services.py
 ├── websocket.py
 ├── diagnostics.py
 ├── repairs.py
 ├── device_trigger.py / device_condition.py / device_action.py
+├── brand/                # icon.png, logo.png, dark variants, @2x
 ├── strings.json / translations/de.json
 ├── services.yaml
 └── frontend/package-tracker-card.js
 
-frontend/src/             # TypeScript/Lit-Quellen + Vitest
-tests/                    # pytest + anonymisierte Fixtures
-docs/                     # Automations- und Tracking-Dokumentation
+frontend/src/             # TypeScript/Lit sources + Vitest
+tests/                    # pytest + anonymised fixtures
+docs/                     # automation, tracking and dashboard docs
 ```
 
-### Neue Händler/Paketdienste ergänzen
+### Adding merchants/carriers
 
-- Händlerdomain/Name: `MERCHANT_DOMAINS` in `email_parser.py`.
-- Paketdienst: `CARRIER_*` in `const.py`, ggf. `TRACKING_URL_TEMPLATES`, `CARRIER_DOMAINS` und Trackingmuster in `email_parser.py`.
-- Neue Status-/Produktmuster: `_DELIVERED_PHRASES`, `_SHIPPED_PHRASES` usw.; danach Fixture + Test ergänzen.
-- Keine Änderungen an Home-Assistant-Core-Dateien.
-
----
-
-## Release und HACS-Veröffentlichung
-
-1. Version in `custom_components/package_tracker/manifest.json`, `const.py` (`VERSION`), `frontend/package.json` und `hacs.json`-Mindestversion konsistent halten.
-2. Frontend bauen (`npm run build`), Bundle committen.
-3. Tests ausführen.
-4. Tag `v1.0.0` setzen und pushen. Die GitHub Action erstellt `package_tracker.zip` und ein Release.
-5. HACS installiert in dieser Konfiguration direkt aus dem Repository (`zip_release: false`); das ZIP-Release dient zusätzlich der manuellen Installation und Archivierung.
-
-Vor dem ersten HACS-Release: Repository öffentlich machen, Themen `home-assistant`, `hacs`, `lovelace` setzen und die HACS-Validierung (`Validate`-Workflow) grün haben.
+- Merchant domain/name: `MERCHANT_DOMAINS` in `email_parser.py`.
+- Carrier: `CARRIER_*` in `const.py`, `TRACKING_URL_TEMPLATES`, `CARRIER_DOMAINS` and tracking patterns in `email_parser.py`.
+- New status/product patterns: `_DELIVERED_PHRASES`, `_SHIPPED_PHRASES`, etc.; add a fixture and test.
+- No changes to Home Assistant Core files.
 
 ---
 
-## Lizenz
+## Releases and HACS
 
-MIT – siehe [LICENSE](LICENSE).
+1. Keep the version consistent in `custom_components/package_tracker/manifest.json`, `const.py` (`VERSION`), `frontend/package.json` and the changelog.
+2. Build the frontend (`npm run build`) and commit the bundle.
+3. Run tests.
+4. Push to `main` and create a tag `vX.Y.Z`. The GitHub Action creates `package_tracker.zip` and a release.
+5. HACS installs directly from the repository (`zip_release: false`); the ZIP release is additionally available for manual installation.
 
-Package Tracker ist ein unabhängiges Community-Projekt und steht in keiner Verbindung zu Amazon, DHL, Deutsche Post, Hermes, DPD, GLS, UPS, FedEx oder Google.
+---
+
+## License
+
+MIT – see [LICENSE](LICENSE).
+
+Package Tracker is an independent community project and is not affiliated with Amazon, DHL, Deutsche Post, Hermes, DPD, GLS, UPS, FedEx or Google.

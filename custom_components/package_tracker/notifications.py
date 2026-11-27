@@ -21,6 +21,7 @@ from .const import (
     STATUS_DELIVERED,
     STATUS_IN_TRANSIT,
     STATUS_LABELS,
+    STATUS_LABELS_DE,
     STATUS_ORDERED,
     STATUS_OUT_FOR_DELIVERY,
     STATUS_READY_FOR_PICKUP,
@@ -134,67 +135,129 @@ def _enabled_events(options: dict[str, Any]) -> set[str]:
     return {str(value) for value in raw}
 
 
-def _date_text(value: str | None) -> str | None:
+def _date_text(value: str | None, german: bool) -> str | None:
     parsed = iso_to_date(value)
     if parsed is None:
         return None
-    return parsed.strftime("%d.%m.%Y")
+    return parsed.strftime("%d.%m.%Y" if german else "%Y-%m-%d")
 
 
 def _product_text(shipment: Shipment) -> str:
     return shipment.display_name
 
 
-def _message_for(change: PackageChange) -> tuple[str, str]:
+def _is_german(hass: HomeAssistant) -> bool:
+    return str(getattr(hass.config, "language", "en")).lower().startswith("de")
+
+
+def _t(hass: HomeAssistant, en: str, de: str) -> str:
+    return de if _is_german(hass) else en
+
+
+def _message_for(hass: HomeAssistant, change: PackageChange) -> tuple[str, str]:
     shipment = change.shipment
     # The package object may already have advanced to a later status while
     # the notification for an earlier change is still queued.
     status = change.new_status or shipment.status
     product = _product_text(shipment)
-    merchant = shipment.merchant or "deinem Shop"
-    carrier = carrier_name(shipment.carrier) or "unbekanntem Paketdienst"
-    date_text = _date_text(shipment.expected_delivery)
+    merchant = shipment.merchant or _t(hass, "your shop", "deinem Shop")
+    carrier = carrier_name(shipment.carrier) or _t(
+        hass, "unknown carrier", "unbekanntem Paketdienst"
+    )
+    date_text = _date_text(shipment.expected_delivery, _is_german(hass))
     window = shipment.delivery_window
 
     if status == STATUS_ORDERED:
-        title = "Neue Bestellung erkannt"
-        message = f"Deine Bestellung „{product}“ bei {merchant} wurde erkannt."
+        title = _t(hass, "New order detected", "Neue Bestellung erkannt")
+        message = _t(
+            hass,
+            f"Your order “{product}” from {merchant} was detected.",
+            f"Deine Bestellung „{product}“ bei {merchant} wurde erkannt.",
+        )
     elif status == STATUS_SHIPPED:
-        title = "Paket versendet"
-        message = f"Dein Paket „{product}“ von {merchant} wurde versendet."
+        title = _t(hass, "Parcel shipped", "Paket versendet")
+        message = _t(
+            hass,
+            f"Your parcel “{product}” from {merchant} has been shipped.",
+            f"Dein Paket „{product}“ von {merchant} wurde versendet.",
+        )
         if date_text:
-            message += f"\nVoraussichtliche Lieferung: {date_text}."
+            message += _t(
+                hass,
+                f"\nEstimated delivery: {date_text}.",
+                f"\nVoraussichtliche Lieferung: {date_text}.",
+            )
     elif status == STATUS_IN_TRANSIT:
-        title = "Paket unterwegs"
-        message = f"Dein Paket „{product}“ von {merchant} ist unterwegs."
+        title = _t(hass, "Parcel in transit", "Paket unterwegs")
+        message = _t(
+            hass,
+            f"Your parcel “{product}” from {merchant} is on its way.",
+            f"Dein Paket „{product}“ von {merchant} ist unterwegs.",
+        )
         if date_text:
-            message += f"\nVoraussichtliche Lieferung: {date_text}."
+            message += _t(
+                hass,
+                f"\nEstimated delivery: {date_text}.",
+                f"\nVoraussichtliche Lieferung: {date_text}.",
+            )
     elif status == STATUS_OUT_FOR_DELIVERY:
-        title = "Paket ist in Zustellung"
-        message = f"Dein Paket ist unterwegs!\n\n„{product}“ von {merchant} wird heute voraussichtlich"
+        title = _t(hass, "Parcel out for delivery", "Paket ist in Zustellung")
+        message = _t(
+            hass,
+            f"Your parcel is on its way!\n\n“{product}” from {merchant} is expected today.",
+            f"Dein Paket ist unterwegs!\n\n„{product}“ von {merchant} wird heute voraussichtlich zugestellt.",
+        )
         if window:
-            message += f" zwischen {window.replace(' Uhr', '')} Uhr"
-        message += " zugestellt."
+            message += _t(hass, f"\nDelivery window: {window}", f"\nZeitfenster: {window}")
     elif status == STATUS_DELIVERED:
-        title = "Paket zugestellt"
-        message = f"Dein Paket „{product}“ von {merchant} wurde zugestellt."
+        title = _t(hass, "Parcel delivered", "Paket zugestellt")
+        message = _t(
+            hass,
+            f"Your parcel “{product}” from {merchant} was delivered.",
+            f"Dein Paket „{product}“ von {merchant} wurde zugestellt.",
+        )
     elif status == STATUS_DELAYED:
-        title = "Paket verspätet"
-        message = f"Dein Paket „{product}“ von {merchant} verspätet sich."
+        title = _t(hass, "Parcel delayed", "Paket verspätet")
+        message = _t(
+            hass,
+            f"Your parcel “{product}” from {merchant} is delayed.",
+            f"Dein Paket „{product}“ von {merchant} verspätet sich.",
+        )
         if date_text:
-            message += f"\nNeuer Liefertermin: {date_text}."
+            message += _t(
+                hass,
+                f"\nNew estimated delivery: {date_text}.",
+                f"\nNeuer Liefertermin: {date_text}.",
+            )
     elif status == STATUS_READY_FOR_PICKUP:
-        title = "Paket abholbereit"
-        message = f"Dein Paket „{product}“ von {merchant} liegt zur Abholung bereit."
+        title = _t(hass, "Parcel ready for pickup", "Paket abholbereit")
+        message = _t(
+            hass,
+            f"Your parcel “{product}” from {merchant} is ready for pickup.",
+            f"Dein Paket „{product}“ von {merchant} liegt zur Abholung bereit.",
+        )
     elif status == STATUS_RETURNED:
-        title = "Paket retourniert"
-        message = f"Dein Paket „{product}“ von {merchant} wurde zurückgesandt."
+        title = _t(hass, "Parcel returned", "Paket retourniert")
+        message = _t(
+            hass,
+            f"Your parcel “{product}” from {merchant} was returned.",
+            f"Dein Paket „{product}“ von {merchant} wurde zurückgesandt.",
+        )
     elif status == STATUS_CANCELLED:
-        title = "Bestellung storniert"
-        message = f"Deine Bestellung „{product}“ bei {merchant} wurde storniert."
+        title = _t(hass, "Order cancelled", "Bestellung storniert")
+        message = _t(
+            hass,
+            f"Your order “{product}” from {merchant} was cancelled.",
+            f"Deine Bestellung „{product}“ bei {merchant} wurde storniert.",
+        )
     else:
-        title = "Paket-Update"
-        message = f"Status von „{product}“: {STATUS_LABELS.get(status, status)}."
+        labels = STATUS_LABELS_DE if _is_german(hass) else STATUS_LABELS
+        title = _t(hass, "Parcel update", "Paket-Update")
+        message = _t(
+            hass,
+            f"Status of “{product}”: {labels.get(status, status)}.",
+            f"Status von „{product}“: {labels.get(status, status)}.",
+        )
 
     if status in {
         STATUS_SHIPPED,
@@ -204,7 +267,7 @@ def _message_for(change: PackageChange) -> tuple[str, str]:
         STATUS_READY_FOR_PICKUP,
         STATUS_RETURNED,
     }:
-        message += f"\nPaketdienst: {carrier}"
+        message += _t(hass, f"\nCarrier: {carrier}", f"\nPaketdienst: {carrier}")
     if shipment.tracking_number and status in {
         STATUS_SHIPPED,
         STATUS_IN_TRANSIT,
@@ -212,7 +275,11 @@ def _message_for(change: PackageChange) -> tuple[str, str]:
         STATUS_DELAYED,
         STATUS_READY_FOR_PICKUP,
     }:
-        message += f"\nSendungsnummer: {shipment.tracking_number}"
+        message += _t(
+            hass,
+            f"\nTracking number: {shipment.tracking_number}",
+            f"\nSendungsnummer: {shipment.tracking_number}",
+        )
     return title, message
 
 
@@ -264,7 +331,7 @@ async def async_handle_notifications(
             age = (datetime.now(UTC) - last_email).total_seconds()
             if age > 48 * 3600:
                 continue
-        title, message = _message_for(change)
+        title, message = _message_for(hass, change)
         data: dict[str, Any] = {}
         if service.startswith("mobile_app_"):
             data["tag"] = f"package_tracker_{shipment.id}_{status}"

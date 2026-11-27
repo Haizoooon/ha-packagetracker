@@ -96,9 +96,11 @@ class PackageManager:
         gmail_account: str | None = None,
         last_notified: dict[str, str] | None = None,
         tz: tzinfo | None = None,
+        order_placeholder_days: int = 7,
     ) -> None:
         self.store_email_subjects = store_email_subjects
         self.tz: tzinfo = tz or UTC
+        self.order_placeholder_days = max(0, int(order_placeholder_days or 0))
         self.shipments: dict[str, Shipment] = shipments or {}
         self.orders: dict[str, Order] = orders or {}
         self.processed_emails: dict[str, str] = processed_emails or {}
@@ -118,6 +120,7 @@ class PackageManager:
         *,
         store_email_subjects: bool = True,
         tz: tzinfo | None = None,
+        order_placeholder_days: int = 7,
     ) -> PackageManager:
         data = data or {}
         shipments: dict[str, Shipment] = {}
@@ -158,6 +161,7 @@ class PackageManager:
                 if isinstance(key, str) and isinstance(value, str)
             },
             tz=tz,
+            order_placeholder_days=order_placeholder_days,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -286,6 +290,27 @@ class PackageManager:
             if shipment is not None:
                 order = self.get_order(shipment.order_id) or order
 
+        if (
+            shipment is None
+            and parsed.kind == "order_confirmation"
+            and not self._should_create_order_placeholder(parsed)
+        ):
+            # Keep the order (for a later shipping mail) but do not show every
+            # historical order confirmation as an active parcel.  This is the
+            # usual case when the initial import catches 30 days of invoices,
+            # review requests and old order confirmations.
+            order = order or self._find_order(parsed) or self._ensure_order(parsed)
+            if order is not None:
+                order.add_email(email_ref)
+                order.add_product_names(parsed.product_names)
+                if parsed.merchant and not order.merchant:
+                    order.merchant = parsed.merchant
+                if parsed.ordered_at and not order.order_date:
+                    order.order_date = parsed.ordered_at
+                order.updated_at = utcnow_iso()
+                self._recompute_order(order)
+            return []
+
         if shipment is None:
             shipment = self._create_shipment(parsed, order)
             if shipment is None:
@@ -335,6 +360,14 @@ class PackageManager:
                 if change_item.shipment.order_id == order.id:
                     change_item.shipment.updated_at = utcnow_iso()
         return changes
+
+    def _should_create_order_placeholder(self, parsed: ParsedEmail) -> bool:
+        if self.order_placeholder_days <= 0:
+            return True
+        received = parse_iso(parsed.received_at)
+        if received is None:
+            return True
+        return utcnow() - received <= timedelta(days=self.order_placeholder_days)
 
     def _find_order(self, parsed: ParsedEmail) -> Order | None:
         for number in parsed.order_numbers:
@@ -1022,7 +1055,7 @@ class PackageManager:
         shipment.updated_at = now
         shipment.manual_override = True
         shipment.add_status_event(
-            STATUS_DELIVERED, now, source="manual", message="Manuell als zugestellt markiert"
+            STATUS_DELIVERED, now, source="manual", message="Marked as delivered manually"
         )
         order = self.get_order(shipment.order_id)
         if order is not None:
@@ -1078,7 +1111,7 @@ class PackageManager:
                     shipment.manual_override = True
                     status_changed = True
                     shipment.add_status_event(
-                        value, now, source="manual", message="Status manuell geändert"
+                        value, now, source="manual", message="Status changed manually"
                     )
                 continue
             setattr(shipment, key, value)
@@ -1137,6 +1170,32 @@ class PackageManager:
             if not key.startswith(f"{package_id}:")
         }
         return shipment
+
+    def purge_stale_order_placeholders(self, days: int, now: datetime) -> int:
+        """Remove old ``ordered`` placeholders that never got a tracking number.
+
+        These are the artifacts of importing weeks of order confirmations.
+        They carry no shipment information, so they are not useful as active
+        parcels.  A later shipping email creates the parcel again with real
+        tracking data.
+        """
+        if days <= 0:
+            return 0
+        cutoff = now - timedelta(days=days)
+        removed = 0
+        for shipment_id, shipment in list(self.shipments.items()):
+            if shipment.status != STATUS_ORDERED or shipment.tracking_number:
+                continue
+            reference = (
+                parse_iso(shipment.last_email_at)
+                or parse_iso(shipment.order_date)
+                or parse_iso(shipment.created_at)
+            )
+            if reference is None or reference > cutoff:
+                continue
+            self.delete_shipment(shipment_id)
+            removed += 1
+        return removed
 
     def purge_terminal(self, retention_days: int, today: datetime) -> int:
         if retention_days <= 0:
@@ -1250,7 +1309,11 @@ class PackageManager:
         upcoming.sort(key=lambda item: item.get("expected_delivery") or "9999-12-31")
         next_delivery = upcoming[0] if upcoming else None
 
-        orders = [order.to_dict() for order in self.orders.values()]
+        orders = [
+            order.to_dict()
+            for order in self.orders.values()
+            if order.shipment_ids
+        ]
         stats = {
             "total": len(packages),
             "active": len(active),

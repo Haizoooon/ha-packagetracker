@@ -133,7 +133,11 @@ export class PackageTrackerCardEditor extends LitElement {
         </div>
 
         <div class="grid">
-          ${this._text(pick(lang, "Titel", "Title"), "title", "Pakete")}
+          ${this._text(
+            pick(lang, "Title", "Titel"),
+            "title",
+            pick(lang, "Parcels", "Pakete"),
+          )}
           ${this._number(
             pick(lang, "Maximal angezeigte Pakete", "Maximum packages"),
             "max_packages",

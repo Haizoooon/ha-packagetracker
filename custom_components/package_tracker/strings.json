@@ -70,7 +70,8 @@
           "tracking_expected_path": "JSON path to expected delivery",
           "tracking_events_path": "JSON path to events",
           "tracking_event_time_path": "JSON path to event timestamp",
-          "tracking_event_text_path": "JSON path to event text"
+          "tracking_event_text_path": "JSON path to event text",
+          "order_placeholder_days": "Show order confirmations from the last X days as active parcels (0 = unlimited)"
         }
       }
     },

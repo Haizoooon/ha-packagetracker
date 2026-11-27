@@ -18,11 +18,13 @@ from .const import (
     CONF_GMAIL_QUERY,
     CONF_INITIAL_SYNC_DAYS,
     CONF_MAX_MESSAGES,
+    CONF_ORDER_PLACEHOLDER_DAYS,
     CONF_RETENTION_DAYS,
     CONF_STORE_EMAIL_SUBJECTS,
     CONF_SYNC_INTERVAL,
     DEFAULT_INITIAL_SYNC_DAYS,
     DEFAULT_MAX_MESSAGES,
+    DEFAULT_ORDER_PLACEHOLDER_DAYS,
     DEFAULT_RETENTION_DAYS,
     DEFAULT_SYNC_INTERVAL,
     DOMAIN,
@@ -119,6 +121,19 @@ class PackageTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.manager.store_email_subjects = bool(
             options.get(CONF_STORE_EMAIL_SUBJECTS, True)
         )
+        try:
+            self.manager.order_placeholder_days = max(
+                0,
+                int(
+                    options.get(
+                        CONF_ORDER_PLACEHOLDER_DAYS,
+                        DEFAULT_ORDER_PLACEHOLDER_DAYS,
+                    )
+                    or 0
+                ),
+            )
+        except (TypeError, ValueError):
+            self.manager.order_placeholder_days = DEFAULT_ORDER_PLACEHOLDER_DAYS
         if options.get(CONF_STORE_EMAIL_SUBJECTS, True) != previous.get(
             CONF_STORE_EMAIL_SUBJECTS, True
         ):
@@ -182,8 +197,22 @@ class PackageTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     int(self.options.get(CONF_RETENTION_DAYS, DEFAULT_RETENTION_DAYS) or 0),
                     dt_util.now(),
                 )
-                if removed:
-                    _LOGGER.debug("Removed %s old packages", removed)
+                stale = self.manager.purge_stale_order_placeholders(
+                    int(
+                        self.options.get(
+                            CONF_ORDER_PLACEHOLDER_DAYS,
+                            DEFAULT_ORDER_PLACEHOLDER_DAYS,
+                        )
+                        or 0
+                    ),
+                    dt_util.utcnow(),
+                )
+                if removed or stale:
+                    _LOGGER.debug(
+                        "Removed %s old terminal packages and %s stale order placeholders",
+                        removed,
+                        stale,
+                    )
             except (TypeError, ValueError):
                 pass
 
@@ -238,11 +267,11 @@ class PackageTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except GmailRateLimitError as err:
             raise UpdateFailed(f"Gmail Rate Limit: {err}") from err
         except GmailQueryError as err:
-            raise UpdateFailed(f"Ungültige Gmail-Suche: {err}") from err
+            raise UpdateFailed(f"Invalid Gmail search query: {err}") from err
         except GmailConnectionError as err:
-            raise UpdateFailed(f"Gmail nicht erreichbar: {err}") from err
+            raise UpdateFailed(f"Gmail unreachable: {err}") from err
         except GmailError as err:
-            raise UpdateFailed(f"Gmail Fehler: {err}") from err
+            raise UpdateFailed(f"Gmail error: {err}") from err
 
         summary["messages_fetched"] = len(fetch.messages)
         parser = EmailParser(self._tz)
@@ -262,8 +291,20 @@ class PackageTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.manager.mark_processed(message.id, message.received_at.isoformat())
                 continue
             if parsed is None:
+                _LOGGER.debug(
+                    "Ignored Gmail message %s (no parcel signal)", message.id
+                )
                 self.manager.mark_processed(message.id, message.received_at.isoformat())
                 continue
+            _LOGGER.debug(
+                "Parsed Gmail message %s as %s (merchant=%s carrier=%s products=%s tracking=%s)",
+                message.id,
+                parsed.kind,
+                parsed.merchant,
+                parsed.carrier,
+                len(parsed.product_names),
+                len(parsed.tracking_numbers),
+            )
             try:
                 changes.extend(self.manager.apply_parsed(parsed))
                 summary["messages_processed"] += 1
@@ -297,9 +338,9 @@ class PackageTrackerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not self.last_update_success:
             error = self.last_exception
             raise HomeAssistantError(
-                f"Gmail-Synchronisierung fehlgeschlagen: {error}"
+                f"Gmail synchronization failed: {error}"
                 if error
-                else "Gmail-Synchronisierung fehlgeschlagen"
+                else "Gmail synchronization failed"
             )
         return {
             "ok": True,

@@ -44,11 +44,11 @@ class PackageTrackerButton(PackageTrackerEntity, ButtonEntity):
             )
             if provider == TRACKING_PROVIDER_NONE:
                 raise HomeAssistantError(
-                    "Kein externer Tracking-Anbieter konfiguriert"
+                    "No external tracking provider is configured"
                 )
             await self.coordinator.async_refresh_tracking_now()
             return
-        raise HomeAssistantError("Unbekannte Aktion")
+        raise HomeAssistantError("Unknown action")
 
 
 BUTTON_DESCRIPTIONS: tuple[ButtonEntityDescription, ...] = (

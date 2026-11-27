@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from homeassistant.core import HomeAssistant
 
-from custom_components.package_tracker.const import DOMAIN
+from custom_components.package_tracker.const import DOMAIN, VERSION
 from custom_components.package_tracker.gmail_client import FetchResult
 
 from .conftest import email_from_fixture, load_email_fixtures, make_config_entry
@@ -43,7 +43,7 @@ async def test_websocket_packages_and_detail(hass: HomeAssistant, ws_entry, hass
     response = await client.receive_json()
     assert response["success"] is True
     result = response["result"]
-    assert result["version"] == "1.0.0"
+    assert result["version"] == VERSION
     assert len(result["packages"]) == 1
     assert result["stats"]["total"] == 1
     assert result["stats"]["delivered_today"] == 1

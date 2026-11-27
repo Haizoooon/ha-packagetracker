@@ -18,7 +18,13 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, STATUS_DELAYED, STATUS_DELIVERED, STATUS_LABELS
+from .const import (
+    DOMAIN,
+    STATUS_DELAYED,
+    STATUS_DELIVERED,
+    STATUS_LABELS,
+    STATUS_LABELS_DE,
+)
 from .coordinator import PackageTrackerCoordinator
 from .entity import PackageTrackerEntity
 from .notifications import package_unique_id
@@ -310,7 +316,12 @@ class PackageStatusSensor(PackageTrackerEntity, SensorEntity):
         if payload is None:
             return {"package_id": self._package_id, "available": False}
         payload["package_id"] = self._package_id
-        payload["status_label"] = STATUS_LABELS.get(
+        labels = (
+            STATUS_LABELS_DE
+            if str(self.hass.config.language).lower().startswith("de")
+            else STATUS_LABELS
+        )
+        payload["status_label"] = labels.get(
             payload.get("status", ""), payload.get("status")
         )
         payload["config_entry_id"] = self._entry.entry_id

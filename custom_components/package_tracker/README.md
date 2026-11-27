@@ -1,16 +1,16 @@
-# Package Tracker – Custom Integration
+# Package Tracker – custom integration
 
-Diese Integration ist Teil des Package-Tracker-Projekts. Die vollständige deutsche Dokumentation inklusive Google-Cloud-Einrichtung, Dashboard, Events, Services, Benachrichtigungen und Fehlerbehebung steht in der [README im Projektstamm](../../README.md).
+This integration is part of the Package Tracker project. The complete documentation, including Google Cloud setup, dashboard configuration, events, services, notifications and troubleshooting, is in the [project README](../../README.md). A German version is available at [README.de.md](../../README.de.md).
 
-## Kurzstart
+## Quick start
 
-1. Gmail API in der Google Cloud Console aktivieren.
-2. OAuth-Client (Webanwendung) mit Redirect-URI `https://my.home-assistant.io/redirect/oauth` erstellen.
-3. Integration hinzufügen und Client-ID/Secret eintragen.
-4. Lesenden Gmail-Zugriff erlauben.
-5. Dashboard-Karte `custom:package-tracker-card` hinzufügen.
+1. Enable the Gmail API in the Google Cloud Console.
+2. Create an OAuth client (Web application) with redirect URI `https://my.home-assistant.io/redirect/oauth`.
+3. Add the integration and enter client ID/secret.
+4. Grant read-only Gmail access.
+5. Add the dashboard card `custom:package-tracker-card`.
 
-## Enthaltene Entities
+## Entities
 
 - `sensor.package_tracker_packages`
 - `sensor.package_tracker_deliveries_today`
@@ -18,16 +18,16 @@ Diese Integration ist Teil des Package-Tracker-Projekts. Die vollständige deuts
 - `sensor.package_tracker_delivered_today`
 - `sensor.package_tracker_packages_in_transit`
 - `sensor.package_tracker_delayed`
-- ein Sensor pro erkanntem Paket
-- Binary Sensoren für Lieferung heute, Zustellung, Verspätung und Gmail-Verbindung
-- Buttons für Gmail-Sync und Tracking-Refresh
+- one sensor per recognised parcel
+- binary sensors for delivery today, out for delivery, delayed and Gmail connection
+- buttons for Gmail sync and tracking refresh
 
-## Datenschutz
+## Privacy
 
-- ausschließlich `gmail.readonly`
-- E-Mail-Analyse lokal
-- keine Speicherung von E-Mail-Bodys
-- keine externe KI
-- Diagnostics mit geschwärzten Tokens, Secrets und Sendungsnummern
+- read-only `gmail.readonly` scope
+- local e-mail analysis
+- no e-mail bodies stored
+- no external AI
+- diagnostics redact tokens, secrets and tracking numbers
 
-Lizenz: MIT.
+License: MIT.

@@ -212,7 +212,9 @@ export class PackageTrackerCard extends LitElement {
         type: "package_tracker/packages",
       });
       if (!snapshot || !Array.isArray(snapshot.packages)) {
-        throw new Error("Ungültige Antwort der Integration");
+        throw new Error(
+          pick(this._lang, "Invalid response from the integration", "Ungültige Antwort der Integration"),
+        );
       }
       this._data = snapshot;
       this._fallbackMode = false;
@@ -1119,8 +1121,8 @@ if (!window.customCards.some((card) => card.type === CARD_TYPE)) {
     type: CARD_TYPE,
     name: "Package Tracker",
     description:
-      "Intelligente Paketübersicht mit Filtern, Detailansicht und optionalem Tracking.",
+      "Intelligent parcel overview with filters, detail view and optional tracking.",
     preview: false,
-    documentationURL: "https://github.com/maxhellwig/package-tracker",
+    documentationURL: "https://github.com/Haizoooon/ha-packagetracker",
   });
 }

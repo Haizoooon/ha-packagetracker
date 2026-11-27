@@ -157,22 +157,22 @@ class DhlUnifiedProvider(TrackingProvider):
                 DHL_UNIFIED_URL, params=params, headers=headers, timeout=20
             ) as response:
                 if response.status in (401, 403):
-                    return TrackingResult(error="DHL API-Key ungültig oder ohne Berechtigung")
+                    return TrackingResult(error="DHL API key invalid or unauthorized")
                 if response.status == 404:
-                    return TrackingResult(error="Sendung bei DHL nicht gefunden")
+                    return TrackingResult(error="Shipment not found at DHL")
                 if response.status == 429:
-                    return TrackingResult(error="DHL Rate Limit erreicht")
+                    return TrackingResult(error="DHL rate limit reached")
                 if response.status >= 400:
                     return TrackingResult(error=f"DHL API HTTP {response.status}")
                 data = await response.json(content_type=None)
         except (ClientError, TimeoutError) as err:
-            return TrackingResult(error=f"DHL nicht erreichbar ({type(err).__name__})")
+            return TrackingResult(error=f"DHL unreachable ({type(err).__name__})")
         except (ValueError, TypeError):
-            return TrackingResult(error="Ungültige DHL Antwort")
+            return TrackingResult(error="Invalid DHL response")
 
         shipments = data.get("shipments") if isinstance(data, dict) else None
         if not isinstance(shipments, list) or not shipments:
-            return TrackingResult(error="Keine Sendungsdaten von DHL")
+            return TrackingResult(error="No shipment data from DHL")
         shipment = shipments[0] if isinstance(shipments[0], dict) else {}
         raw_events = shipment.get("events") if isinstance(shipment.get("events"), list) else []
         events: list[TrackingEvent] = []
@@ -235,7 +235,7 @@ class CustomJsonProvider(TrackingProvider):
     async def async_track(self, tracking_number: str) -> TrackingResult:
         url_template = str(self._options.get(CONF_TRACKING_URL) or "")
         if "{tracking}" not in url_template:
-            return TrackingResult(error="Tracking-URL muss {tracking} enthalten")
+            return TrackingResult(error="Tracking URL must contain {tracking}")
         url = url_template.replace("{tracking}", tracking_number)
         headers = {"Accept": "application/json"}
         header_name = str(self._options.get(CONF_TRACKING_HEADER) or "").strip()
@@ -250,18 +250,18 @@ class CustomJsonProvider(TrackingProvider):
         try:
             async with session.get(url, headers=headers, timeout=25) as response:
                 if response.status in (401, 403):
-                    return TrackingResult(error="Tracking-Endpunkt verweigert den Zugriff")
+                    return TrackingResult(error="Tracking endpoint denied access")
                 if response.status == 404:
-                    return TrackingResult(error="Sendung nicht gefunden")
+                    return TrackingResult(error="Shipment not found")
                 if response.status == 429:
-                    return TrackingResult(error="Tracking Rate Limit erreicht")
+                    return TrackingResult(error="Tracking rate limit reached")
                 if response.status >= 400:
-                    return TrackingResult(error=f"Tracking-Endpunkt HTTP {response.status}")
+                    return TrackingResult(error=f"Tracking endpoint HTTP {response.status}")
                 data = await response.json(content_type=None)
         except (ClientError, TimeoutError) as err:
-            return TrackingResult(error=f"Tracking-Endpunkt nicht erreichbar ({type(err).__name__})")
+            return TrackingResult(error=f"Tracking endpoint unreachable ({type(err).__name__})")
         except (ValueError, TypeError):
-            return TrackingResult(error="Tracking-Endpunkt liefert kein gültiges JSON")
+            return TrackingResult(error="Tracking endpoint returned invalid JSON")
 
         status_value = _resolve_path(data, str(self._options.get(CONF_TRACKING_STATUS_PATH) or "status"))
         status = _status_from_text(str(status_value)) if status_value is not None else None
@@ -369,7 +369,7 @@ async def async_refresh_tracking(
                 shipment.id,
                 type(err).__name__,
             )
-            result = TrackingResult(error=f"Unerwarteter Fehler ({type(err).__name__})")
+            result = TrackingResult(error=f"Unexpected error ({type(err).__name__})")
         if result.error:
             _LOGGER.debug(
                 "Tracking failed for package %s: %s", shipment.id, result.error

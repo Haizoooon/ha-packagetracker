@@ -11,6 +11,7 @@ import {
   pick,
   statusLabel,
   statusTone,
+  translateNote,
 } from "./logic";
 
 export class PackageDetail extends LitElement {
@@ -234,7 +235,7 @@ export class PackageDetail extends LitElement {
             ${this._renderStepper()}
 
             ${pkg.notes
-              ? html`<div class="note">${pkg.notes}</div>`
+              ? html`<div class="note">${translateNote(pkg.notes, this.lang)}</div>`
               : nothing}
 
             <section class="section">
@@ -341,7 +342,7 @@ export class PackageDetail extends LitElement {
                               >
                             </div>
                             ${event.description
-                              ? html`<div class="timeline-desc">${event.description}</div>`
+                              ? html`<div class="timeline-desc">${translateNote(event.description, this.lang)}</div>`
                               : nothing}
                             <div class="timeline-source">
                               ${event.source === "tracking"

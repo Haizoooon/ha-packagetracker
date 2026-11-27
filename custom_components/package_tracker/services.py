@@ -121,11 +121,11 @@ def _runtimes_for_call(hass: HomeAssistant, entry_id: str | None) -> list[EntryR
     if entry_id:
         runtime = get_runtime(hass, entry_id)
         if runtime is None:
-            raise HomeAssistantError(f"Package Tracker Eintrag {entry_id} nicht gefunden")
+            raise HomeAssistantError(f"Package Tracker entry {entry_id} not found")
         return [runtime]
     runtimes = list(get_runtimes(hass).values())
     if not runtimes:
-        raise HomeAssistantError("Package Tracker ist nicht eingerichtet")
+        raise HomeAssistantError("Package Tracker is not configured")
     return runtimes
 
 
@@ -136,7 +136,7 @@ def _runtime_for_package(
     for runtime in candidates:
         if runtime.manager.get_shipment(package_id) is not None:
             return runtime
-    raise HomeAssistantError(f"Paket {package_id} nicht gefunden")
+    raise HomeAssistantError(f"Package {package_id} not found")
 
 
 def _canonical_carrier(value: str | None) -> str | None:
@@ -148,7 +148,7 @@ def _canonical_carrier(value: str | None) -> str | None:
     for key, name in CARRIER_NAMES.items():
         if name.casefold() == lowered:
             return key
-    raise HomeAssistantError(f"Unbekannter Paketdienst: {value}")
+    raise HomeAssistantError(f"Unknown carrier: {value}")
 
 
 async def async_setup_services(hass: HomeAssistant) -> None:
@@ -195,7 +195,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             delivered_at.isoformat() if delivered_at else None,
         )
         if change is None:
-            raise HomeAssistantError("Paket ist bereits zugestellt oder nicht vorhanden")
+            raise HomeAssistantError("Package is already delivered or does not exist")
         return {"ok": True, "package_id": package_id, "status": change.new_status}
 
     async def async_handle_mark_completed(call: ServiceCall) -> dict[str, Any]:
@@ -233,13 +233,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         runtime = _runtime_for_package(hass, package_id, call.data.get(ATTR_ENTRY_ID))
         deleted = await runtime.coordinator.async_delete_package(package_id)
         if not deleted:
-            raise HomeAssistantError(f"Paket {package_id} konnte nicht gelöscht werden")
+            raise HomeAssistantError(f"Package {package_id} could not be deleted")
         return {"ok": True, "package_id": package_id}
 
     async def async_handle_delete_all(call: ServiceCall) -> dict[str, Any]:
         if not call.data.get(CONF_CONFIRM):
             raise HomeAssistantError(
-                "Löschen abgebrochen: 'confirm: true' ist erforderlich"
+                "Deletion cancelled: confirm: true is required"
             )
         runtime_list = _runtimes_for_call(hass, call.data.get(ATTR_ENTRY_ID))
         for runtime in runtime_list:
@@ -252,7 +252,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         runtime_list = _runtimes_for_call(hass, call.data.get(ATTR_ENTRY_ID))
         if len(runtime_list) > 1:
             raise HomeAssistantError(
-                "Mehrere Konten verbunden; bitte config_entry_id angeben"
+                "Multiple accounts connected; please provide config_entry_id"
             )
         entry = runtime_list[0].entry
         await hass.config_entries.async_remove(entry.entry_id)

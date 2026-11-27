@@ -363,11 +363,11 @@ class GmailClient:
             raise
         except (ClientError, TimeoutError) as err:
             raise GmailConnectionError(
-                f"Gmail ist nicht erreichbar ({type(err).__name__})"
+                f"Gmail is unreachable ({type(err).__name__})"
             ) from err
 
         if response.status == HTTPStatus.UNAUTHORIZED:
-            raise GmailAuthError("Gmail hat den Zugriff verweigert")
+            raise GmailAuthError("Gmail denied access")
         if response.status == HTTPStatus.FORBIDDEN:
             payload = await self._safe_json(response)
             detail = _error_detail(response, payload)
@@ -380,13 +380,13 @@ class GmailClient:
         if response.status == HTTPStatus.TOO_MANY_REQUESTS:
             retry_after = response.headers.get("Retry-After")
             raise GmailRateLimitError(
-                f"Gmail Rate Limit erreicht (Retry-After: {retry_after or 'unbekannt'})"
+                f"Gmail rate limit reached (Retry-After: {retry_after or 'unknown'})"
             )
         if response.status == HTTPStatus.BAD_REQUEST:
             payload = await self._safe_json(response)
             raise GmailQueryError(_error_detail(response, payload))
         if response.status >= 500:
-            raise GmailConnectionError(f"Gmail Serverfehler (HTTP {response.status})")
+            raise GmailConnectionError(f"Gmail server error (HTTP {response.status})")
         if response.status >= 400:
             payload = await self._safe_json(response)
             raise GmailError(_error_detail(response, payload))
@@ -397,7 +397,7 @@ class GmailClient:
         try:
             data = await response.json(content_type=None)
         except (ValueError, TypeError) as err:
-            raise GmailError("Ungültige Antwort von Gmail") from err
+            raise GmailError("Invalid Gmail response") from err
         return data if isinstance(data, dict) else {}
 
     @staticmethod
@@ -413,7 +413,7 @@ async def async_probe_account(hass: HomeAssistant, token: dict[str, Any]) -> dic
     """Validate a fresh OAuth token during the config flow."""
     access_token = token.get("access_token")
     if not access_token:
-        raise GmailAuthError("Kein Access Token erhalten")
+        raise GmailAuthError("No access token received")
     session = async_get_clientsession(hass)
     headers = {"Authorization": f"Bearer {access_token}"}
     try:
@@ -423,7 +423,7 @@ async def async_probe_account(hass: HomeAssistant, token: dict[str, Any]) -> dic
             timeout=30,
         ) as response:
             if response.status == HTTPStatus.UNAUTHORIZED:
-                raise GmailAuthError("Google hat das Token abgelehnt")
+                raise GmailAuthError("Google rejected the token")
             if response.status == HTTPStatus.FORBIDDEN:
                 try:
                     payload = await response.json(content_type=None)
@@ -434,14 +434,14 @@ async def async_probe_account(hass: HomeAssistant, token: dict[str, Any]) -> dic
                     raise GmailScopeError(detail)
                 raise GmailAuthError(detail)
             if response.status >= 400:
-                raise GmailError(f"Gmail API antwortet mit HTTP {response.status}")
+                raise GmailError(f"Gmail API returned HTTP {response.status}")
             data = await response.json(content_type=None)
     except (ClientError, TimeoutError) as err:
         raise GmailConnectionError(
-            f"Gmail ist nicht erreichbar ({type(err).__name__})"
+            f"Gmail is unreachable ({type(err).__name__})"
         ) from err
     if not isinstance(data, dict) or not data.get("emailAddress"):
-        raise GmailError("Gmail Profil konnte nicht gelesen werden")
+        raise GmailError("Gmail profile could not be read")
     return data
 
 

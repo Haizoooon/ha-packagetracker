@@ -1,29 +1,29 @@
-# Optionaler Tracking-Provider – Vertrag
+# Optional tracking provider contract
 
-Package Tracker benötigt **keine** externe Tracking-API. Die E-Mail-Daten sind die primäre Quelle. Wer zusätzliche Tracking-Events möchte, kann einen der folgenden Anbieter konfigurieren.
+Package Tracker does **not** require an external tracking API. E-mail data is the primary source. If you want additional tracking events, configure one of the following providers.
 
-## Grundsätze
+## Principles
 
-- Standard: `none` (kein externer Abruf).
-- Kein Scraping, kein Browser, kein JavaScript.
-- Nur GET-Anfragen; Timeout 20–25 Sekunden.
-- Fehler werden am Paket gespeichert (`tracking.error`) und beeinflussen den Gmail-Sync nicht.
-- Trackingdaten werden getrennt von E-Mail-Daten gespeichert (`shipment.tracking`).
-- E-Mail-Fakten (Händler, Produkt, Bestellnummer, E-Mail-Historie) werden nicht überschrieben.
-- Ein aus der E-Mail bekannter Liefertermin bleibt primär; der Provider-Termin steht separat als `tracking.expected_delivery`.
-- Terminale E-Mail-Status (`delivered`, `returned`, `cancelled`) werden nicht automatisch zurückgestuft.
+- Default: `none` (no external request).
+- No scraping, no browser, no JavaScript.
+- GET requests only; timeout 20–25 seconds.
+- Errors are stored on the parcel (`tracking.error`) and never affect Gmail sync.
+- Tracking data is stored separately from e-mail data (`shipment.tracking`).
+- E-mail facts (merchant, product, order number, e-mail history) are not overwritten.
+- An e-mail delivery date remains primary; the provider estimate is stored separately as `tracking.expected_delivery`.
+- Terminal e-mail statuses (`delivered`, `returned`, `cancelled`) are never downgraded automatically.
 
 ## 1. DHL Unified API
 
-- Offizieller Endpunkt: `https://api-eu.dhl.com/track/shipments?trackingNumber=...&language=de`
+- Official endpoint: `https://api-eu.dhl.com/track/shipments?trackingNumber=...&language=en`
 - Header: `DHL-API-Key: <key>`
-- API-Key bei [DHL Developer](https://developer.dhl.com/) beantragen.
-- Optionen:
+- Request an API key at [DHL Developer](https://developer.dhl.com/).
+- Options:
   - `tracking_provider: dhl_unified`
   - `tracking_api_key`
-  - `tracking_interval` (Minuten, 0 = aus)
+  - `tracking_interval` (minutes, 0 = off)
 
-Erwartete Antwort (vereinfacht):
+Expected response (simplified):
 
 ```json
 {
@@ -31,14 +31,14 @@ Erwartete Antwort (vereinfacht):
     {
       "status": {
         "statusCode": "transit",
-        "description": "Die Sendung ist unterwegs",
+        "description": "The shipment is in transit",
         "timestamp": "2026-11-26T08:00:00+00:00"
       },
       "estimatedTimeOfDelivery": "2026-11-29",
       "events": [
         {
           "timestamp": "2026-11-25T18:00:00+00:00",
-          "description": "Im Paketzentrum bearbeitet",
+          "description": "Processed at the parcel centre",
           "location": {
             "address": {
               "addressLocality": "Hamburg"
@@ -51,26 +51,26 @@ Erwartete Antwort (vereinfacht):
 }
 ```
 
-Unterstützte Statuscodes: `pre-transit`, `transit`, `delivered`, `failure`, `unknown`. Zusätzlich werden deutsche/englische Beschreibungen ausgewertet.
+Supported status codes: `pre-transit`, `transit`, `delivered`, `failure`, `unknown`. German and English descriptions are also evaluated.
 
-## 2. Eigener JSON-Endpunkt
+## 2. Custom JSON endpoint
 
-Optionen:
+Options:
 
-| Option | Beispiel | Bedeutung |
+| Option | Example | Meaning |
 |---|---|---|
-| `tracking_provider` | `custom_json` | aktiviert den Provider |
-| `tracking_url` | `https://api.example.com/track/{tracking}` | Pflicht, `{tracking}` wird ersetzt |
+| `tracking_provider` | `custom_json` | enables the provider |
+| `tracking_url` | `https://api.example.com/track/{tracking}` | required, `{tracking}` is substituted |
 | `tracking_header` | `X-Api-Key` | optional |
 | `tracking_header_value` | `...` | optional |
-| `tracking_api_key` | `...` | alternativ `Authorization: Bearer ...` |
-| `tracking_status_path` | `data.state` | JSON-Pfad zum Status |
-| `tracking_expected_path` | `data.expected_delivery` | JSON-Pfad zum Liefertermin |
-| `tracking_events_path` | `data.history` | JSON-Pfad zur Ereignisliste |
-| `tracking_event_time_path` | `timestamp` | Pfad **innerhalb** eines Ereignisses |
-| `tracking_event_text_path` | `description` | Pfad innerhalb eines Ereignisses |
+| `tracking_api_key` | `...` | alternative to `Authorization: Bearer ...` |
+| `tracking_status_path` | `data.state` | JSON path to the status |
+| `tracking_expected_path` | `data.expected_delivery` | JSON path to the delivery estimate |
+| `tracking_events_path` | `data.history` | JSON path to the event list |
+| `tracking_event_time_path` | `timestamp` | path **inside** an event |
+| `tracking_event_text_path` | `description` | path inside an event |
 
-Unterstützte JSON-Formen:
+Supported JSON shape:
 
 ```json
 {
@@ -80,20 +80,20 @@ Unterstützte JSON-Formen:
     "history": [
       {
         "timestamp": "2026-11-26T09:00:00+00:00",
-        "description": "Im Paketzentrum angekommen"
+        "description": "Arrived at the parcel centre"
       }
     ]
   }
 }
 ```
 
-Mindestanforderung:
+Minimum requirements:
 
-- `tracking_url` enthält `{tracking}`.
-- Antwort ist gültiges JSON.
-- Status-/Ereignis-Pfade sind optional; ohne Treffer wird nichts erfunden.
+- `tracking_url` contains `{tracking}`.
+- Response is valid JSON.
+- Status/event paths are optional; no data is invented if they do not match.
 
-Status-Erkennung (Auszug):
+Status mapping (excerpt):
 
 - `delivered`, `zugestellt` → `delivered`
 - `out for delivery`, `in zustellung`, `zustellfahrzeug` → `out_for_delivery`
@@ -102,13 +102,13 @@ Status-Erkennung (Auszug):
 - `transit`, `unterwegs`, `paketzentrum` → `in_transit`
 - `shipped`, `versendet` → `shipped`
 
-## Sicherheit
+## Security
 
-- Verwende ausschließlich offizielle oder selbst betriebene Endpunkte.
-- Keine Zugangsdaten in die URL schreiben, wenn der Provider Logs erstellt; nutze Header.
-- Der API-Key wird im Config-Entry gespeichert und in Diagnostics geschwärzt.
-- Bei Fehlern werden keine Daten gelöscht; der letzte erfolgreiche Stand bleibt erhalten.
+- Use official or self-hosted endpoints only.
+- Do not put credentials in the URL if the provider logs URLs; use headers.
+- The API key is stored in the config entry and redacted in diagnostics.
+- On errors no data is deleted; the last successful state remains.
 
-## Warum kein Standard-Scraping?
+## Why no default scraping?
 
-Paketdienst-Websites ändern sich, blockieren Bots und liefern oft nur mit Login vollständige Daten. Ein Scraping-Fallback wäre unzuverlässig und würde bei Ausfällen die Gmail-Erkennung gefährden. Deshalb ist Tracking explizit optional und getrennt implementiert.
+Carrier websites change, block bots and often require a login for complete data. A scraping fallback would be unreliable and could break Gmail recognition during outages. Tracking is therefore explicitly optional and implemented separately.

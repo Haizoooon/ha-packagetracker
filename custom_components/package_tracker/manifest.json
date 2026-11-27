@@ -1,14 +1,21 @@
 {
   "domain": "package_tracker",
   "name": "Package Tracker",
-  "codeowners": ["@maxhellwig"],
+  "codeowners": [
+    "@Haizoooon"
+  ],
   "config_flow": true,
-  "dependencies": ["http", "websocket_api"],
-  "after_dependencies": ["frontend"],
-  "documentation": "https://github.com/maxhellwig/package-tracker",
+  "dependencies": [
+    "http",
+    "websocket_api"
+  ],
+  "after_dependencies": [
+    "frontend"
+  ],
+  "documentation": "https://github.com/Haizoooon/ha-packagetracker",
   "integration_type": "service",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/maxhellwig/package-tracker/issues",
+  "issue_tracker": "https://github.com/Haizoooon/ha-packagetracker/issues",
   "requirements": [],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

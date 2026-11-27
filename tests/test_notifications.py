@@ -65,9 +65,9 @@ async def test_delivered_notification_sent_once(
     _entry, fetch = await setup_notification_entry(hass, calls, handler)
 
     assert len(calls) == 1
-    assert "zugestellt" in calls[0]["message"]
+    assert "delivered" in calls[0]["message"]
     assert "Logitech MX Master 4" in calls[0]["message"]
-    assert calls[0]["title"] == "Paket zugestellt"
+    assert calls[0]["title"] == "Parcel delivered"
 
     with patch(
         "custom_components.package_tracker.gmail_client.GmailClient.async_fetch_messages",
@@ -101,7 +101,7 @@ async def test_out_for_delivery_notification_uses_change_status(
         await hass.async_block_till_done()
 
     assert len(calls) == 1
-    assert calls[0]["title"] == "Paket ist in Zustellung"
+    assert calls[0]["title"] == "Parcel out for delivery"
     assert "14:00–18:00 Uhr" in calls[0]["message"]
 
 
@@ -122,6 +122,32 @@ async def test_no_notification_without_service(
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_notifications_are_translated_to_german(
+    hass: HomeAssistant, freezer, notify_calls
+) -> None:
+    freezer.move_to("2026-11-26 18:00:00+00:00")
+    await hass.config.async_set_time_zone("UTC")
+    hass.config.language = "de"
+    calls, handler = notify_calls
+    hass.services.async_register("notify", "test", handler)
+    entry = make_config_entry(
+        hass,
+        notify_service="test",
+        notify_events=["delivered"],
+    )
+    fetch = AsyncMock(return_value=FetchResult(messages=MESSAGES, query="test"))
+    with patch(
+        "custom_components.package_tracker.gmail_client.GmailClient.async_fetch_messages",
+        new=fetch,
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    assert len(calls) == 1
+    assert calls[0]["title"] == "Paket zugestellt"
+    assert "zugestellt" in calls[0]["message"]
 
 
 @pytest.mark.asyncio

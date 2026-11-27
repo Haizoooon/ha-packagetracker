@@ -236,3 +236,37 @@ def test_future_delivery_announcement_is_not_out_for_delivery_yet() -> None:
     assert parsed is not None
     assert parsed.status == "in_transit"
     assert parsed.expected_delivery == "2026-11-29"
+
+
+def test_review_request_with_order_number_is_not_a_package() -> None:
+    email = EmailMessage(
+        id="review",
+        thread_id=None,
+        received_at=datetime(2026, 11, 24, 9, 0, tzinfo=UTC),
+        sender_name="Amazon.de",
+        sender_email="bewertung@amazon.de",
+        subject="Bewerte deine Bestellung von Logitech MX Master 4",
+        text=(
+            "Vielen Dank für deine Bestellung. Wie war dein Produkt? "
+            "Bestellnummer: 302-1234567-8901234. Jetzt bewerten."
+        ),
+        html="",
+    )
+    assert EmailParser(UTC).parse(email) is None
+
+
+def test_invoice_mail_with_order_number_is_not_a_package() -> None:
+    email = EmailMessage(
+        id="invoice",
+        thread_id=None,
+        received_at=datetime(2026, 11, 24, 9, 0, tzinfo=UTC),
+        sender_name="Amazon.de",
+        sender_email="rechnung@amazon.de",
+        subject="Deine Rechnung für Bestellung 302-1234567-8901234",
+        text=(
+            "Vielen Dank für deine Bestellung. Im Anhang findest du deine Rechnung. "
+            "Bestellnummer: 302-1234567-8901234."
+        ),
+        html="",
+    )
+    assert EmailParser(UTC).parse(email) is None

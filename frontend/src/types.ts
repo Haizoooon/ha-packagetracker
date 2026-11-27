@@ -193,7 +193,7 @@ export interface PackageTrackerCardConfig {
 }
 
 export const DEFAULT_CONFIG: Required<Omit<PackageTrackerCardConfig, "type">> = {
-  title: "Pakete",
+  title: "",
   max_packages: 24,
   show_delivered: false,
   show_images: true,

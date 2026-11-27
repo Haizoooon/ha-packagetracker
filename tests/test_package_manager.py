@@ -32,7 +32,9 @@ def parsed(key: str) -> ParsedEmail:
 
 
 def manager() -> PackageManager:
-    return PackageManager(tz=TZ)
+    # Merge tests intentionally use a long placeholder window; dedicated
+    # tests below cover the production default separately.
+    return PackageManager(tz=TZ, order_placeholder_days=365)
 
 
 def custom(
@@ -402,3 +404,59 @@ def test_order_confirmation_adopts_early_shipping_mail() -> None:
     assert shipment.order_number == "302-1234567-8901234"
     assert len(mgr.orders) == 1
     assert next(iter(mgr.orders.values())).order_number == "302-1234567-8901234"
+
+
+def test_old_order_confirmation_is_hidden_until_shipping_arrives() -> None:
+    mgr = PackageManager(tz=TZ)
+    old_order = replace(
+        parsed("amazon_order"),
+        message_id="old-order",
+        received_at="2026-10-01T09:00:00+00:00",
+        ordered_at="2026-10-01",
+        expected_delivery=None,
+    )
+    assert mgr.apply_parsed(old_order) == []
+    assert len(mgr.shipments) == 0
+    assert len(mgr.orders) == 1
+
+    shipping = replace(
+        parsed("amazon_shipping"),
+        message_id="later-shipping",
+        received_at="2026-11-25T10:00:00+00:00",
+    )
+    changes = mgr.apply_parsed(shipping)
+    assert len(changes) == 1
+    assert len(mgr.shipments) == 1
+    assert len(mgr.orders) == 1
+    shipment = next(iter(mgr.shipments.values()))
+    assert shipment.order_number == "302-1234567-8901234"
+    assert shipment.status == STATUS_SHIPPED
+
+
+def test_zero_order_placeholder_days_keeps_old_orders() -> None:
+    mgr = PackageManager(tz=TZ, order_placeholder_days=0)
+    old_order = replace(
+        parsed("amazon_order"),
+        message_id="old-order-visible",
+        received_at="2026-10-01T09:00:00+00:00",
+        ordered_at="2026-10-01",
+        expected_delivery=None,
+    )
+    mgr.apply_parsed(old_order)
+    assert len(mgr.shipments) == 1
+
+
+def test_stale_order_placeholders_are_cleaned_up() -> None:
+    mgr = PackageManager(tz=TZ, order_placeholder_days=365)
+    old = replace(
+        parsed("amazon_order"),
+        message_id="stale-order",
+        received_at="2026-10-01T09:00:00+00:00",
+        ordered_at="2026-10-01",
+        expected_delivery=None,
+    )
+    mgr.apply_parsed(old)
+    assert len(mgr.shipments) == 1
+    removed = mgr.purge_stale_order_placeholders(7, utcnow())
+    assert removed == 1
+    assert not mgr.shipments

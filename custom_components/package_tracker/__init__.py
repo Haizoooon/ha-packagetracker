@@ -19,9 +19,11 @@ from .const import (
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
     CONF_GMAIL_ACCOUNT,
+    CONF_ORDER_PLACEHOLDER_DAYS,
     CONF_REDIRECT_URI,
     CONF_STORE_EMAIL_SUBJECTS,
     CONF_TOKEN,
+    DEFAULT_ORDER_PLACEHOLDER_DAYS,
     DOMAIN,
     NAME,
     VERSION,
@@ -103,9 +105,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         load_result.data,
         store_email_subjects=bool(entry.options.get(CONF_STORE_EMAIL_SUBJECTS, True)),
         tz=tz,
+        order_placeholder_days=int(
+            entry.options.get(
+                CONF_ORDER_PLACEHOLDER_DAYS, DEFAULT_ORDER_PLACEHOLDER_DAYS
+            )
+        ),
     )
     manager.gmail_account = entry.data.get(CONF_GMAIL_ACCOUNT) or manager.gmail_account
 
+    manager.purge_stale_order_placeholders(
+        int(
+            entry.options.get(
+                CONF_ORDER_PLACEHOLDER_DAYS, DEFAULT_ORDER_PLACEHOLDER_DAYS
+            )
+        ),
+        dt_util.utcnow(),
+    )
     coordinator = PackageTrackerCoordinator(
         hass, entry, manager, store, gmail
     )

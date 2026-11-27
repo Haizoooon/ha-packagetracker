@@ -7,7 +7,7 @@ from typing import Final
 
 DOMAIN: Final = "package_tracker"
 NAME: Final = "Package Tracker"
-VERSION: Final = "1.0.0"
+VERSION: Final = "1.0.1"
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -25,6 +25,7 @@ CONF_GMAIL_QUERY: Final = "gmail_query"
 CONF_MAX_MESSAGES: Final = "max_messages_per_sync"
 CONF_STORE_EMAIL_SUBJECTS: Final = "store_email_subjects"
 CONF_RETENTION_DAYS: Final = "retention_days"
+CONF_ORDER_PLACEHOLDER_DAYS: Final = "order_placeholder_days"
 
 CONF_NOTIFY_SERVICE: Final = "notify_service"
 CONF_NOTIFY_EVENTS: Final = "notify_events"
@@ -60,6 +61,7 @@ DEFAULT_INITIAL_SYNC_DAYS: Final = 30
 DEFAULT_MAX_MESSAGES: Final = 1000
 DEFAULT_TRACKING_INTERVAL: Final = 60  # minutes, 0 = disabled
 DEFAULT_RETENTION_DAYS: Final = 90  # 0 = keep forever
+DEFAULT_ORDER_PLACEHOLDER_DAYS: Final = 7  # 0 = no age limit
 
 # A deliberately broad server-side filter. The parser does the precise work.
 # Gmail search is case-insensitive and searches headers and bodies.
@@ -163,6 +165,19 @@ ON_THE_WAY_STATUSES: Final = frozenset(
 )
 
 STATUS_LABELS: Final[dict[str, str]] = {
+    STATUS_ORDERED: "Ordered",
+    STATUS_SHIPPED: "Shipped",
+    STATUS_IN_TRANSIT: "In transit",
+    STATUS_OUT_FOR_DELIVERY: "Out for delivery",
+    STATUS_DELIVERED: "Delivered",
+    STATUS_DELAYED: "Delayed",
+    STATUS_READY_FOR_PICKUP: "Ready for pickup",
+    STATUS_RETURNED: "Returned",
+    STATUS_CANCELLED: "Cancelled",
+    STATUS_UNKNOWN: "Unknown",
+}
+
+STATUS_LABELS_DE: Final[dict[str, str]] = {
     STATUS_ORDERED: "Bestellt",
     STATUS_SHIPPED: "Versendet",
     STATUS_IN_TRANSIT: "Unterwegs",
@@ -254,6 +269,19 @@ EVENT_PACKAGE_RETURNED: Final = EVENT_STATUS_MAP[STATUS_RETURNED]
 EVENT_PACKAGE_CANCELLED: Final = EVENT_STATUS_MAP[STATUS_CANCELLED]
 
 NOTIFY_EVENT_OPTIONS: Final[dict[str, str]] = {
+    STATUS_ORDERED: "Order detected",
+    STATUS_SHIPPED: "Parcel shipped",
+    STATUS_IN_TRANSIT: "Parcel in transit",
+    STATUS_OUT_FOR_DELIVERY: "Parcel out for delivery",
+    STATUS_DELIVERED: "Parcel delivered",
+    STATUS_DELAYED: "Parcel delayed",
+    STATUS_READY_FOR_PICKUP: "Parcel ready for pickup",
+    STATUS_RETURNED: "Parcel returned",
+    STATUS_CANCELLED: "Order cancelled",
+    STATUS_UNKNOWN: "Unknown status",
+}
+
+NOTIFY_EVENT_OPTIONS_DE: Final[dict[str, str]] = {
     STATUS_ORDERED: "Bestellung erkannt",
     STATUS_SHIPPED: "Paket versendet",
     STATUS_IN_TRANSIT: "Paket unterwegs",

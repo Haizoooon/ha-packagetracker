@@ -21,6 +21,7 @@ from .const import (
     CONF_MAX_MESSAGES,
     CONF_NOTIFY_EVENTS,
     CONF_NOTIFY_SERVICE,
+    CONF_ORDER_PLACEHOLDER_DAYS,
     CONF_REDIRECT_URI,
     CONF_RETENTION_DAYS,
     CONF_STORE_EMAIL_SUBJECTS,
@@ -41,12 +42,14 @@ from .const import (
     DEFAULT_INITIAL_SYNC_DAYS,
     DEFAULT_MAX_MESSAGES,
     DEFAULT_NOTIFY_EVENTS,
+    DEFAULT_ORDER_PLACEHOLDER_DAYS,
     DEFAULT_RETENTION_DAYS,
     DEFAULT_SYNC_INTERVAL,
     DEFAULT_TRACKING_INTERVAL,
     DOMAIN,
     NAME,
     NOTIFY_EVENT_OPTIONS,
+    NOTIFY_EVENT_OPTIONS_DE,
     TRACKING_PROVIDER_CUSTOM,
     TRACKING_PROVIDER_DHL,
     TRACKING_PROVIDER_NONE,
@@ -71,6 +74,7 @@ def _default_options() -> dict[str, Any]:
         CONF_MAX_MESSAGES: DEFAULT_MAX_MESSAGES,
         CONF_STORE_EMAIL_SUBJECTS: True,
         CONF_RETENTION_DAYS: DEFAULT_RETENTION_DAYS,
+        CONF_ORDER_PLACEHOLDER_DAYS: DEFAULT_ORDER_PLACEHOLDER_DAYS,
         CONF_NOTIFY_SERVICE: "",
         CONF_NOTIFY_EVENTS: list(DEFAULT_NOTIFY_EVENTS),
         CONF_TRACKING_PROVIDER: TRACKING_PROVIDER_NONE,
@@ -85,6 +89,20 @@ def _default_options() -> dict[str, Any]:
         CONF_TRACKING_EVENT_TIME_PATH: "timestamp",
         CONF_TRACKING_EVENT_TEXT_PATH: "description",
     }
+
+
+def _is_german(hass) -> bool:
+    return str(getattr(hass.config, "language", "en")).lower().startswith("de")
+
+
+def _unit(hass, unit: str) -> str:
+    if unit == "days":
+        return "Tage" if _is_german(hass) else "days"
+    return "Minuten" if _is_german(hass) else "min"
+
+
+def _notify_options(hass) -> dict[str, str]:
+    return NOTIFY_EVENT_OPTIONS_DE if _is_german(hass) else NOTIFY_EVENT_OPTIONS
 
 
 def _number_selector(minimum: int, maximum: int, unit: str | None = None) -> selector.NumberSelector:
@@ -114,17 +132,17 @@ def _select(
     )
 
 
-def _settings_schema(defaults: dict[str, Any]) -> vol.Schema:
+def _settings_schema(defaults: dict[str, Any], hass) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(
                 CONF_SYNC_INTERVAL,
                 default=defaults.get(CONF_SYNC_INTERVAL, DEFAULT_SYNC_INTERVAL),
-            ): _number_selector(1, 1440, "min"),
+            ): _number_selector(1, 1440, _unit(hass, "min")),
             vol.Required(
                 CONF_INITIAL_SYNC_DAYS,
                 default=defaults.get(CONF_INITIAL_SYNC_DAYS, DEFAULT_INITIAL_SYNC_DAYS),
-            ): _number_selector(1, 365, "Tage"),
+            ): _number_selector(1, 365, _unit(hass, "days")),
             vol.Optional(
                 CONF_NOTIFY_SERVICE,
                 default=defaults.get(CONF_NOTIFY_SERVICE, ""),
@@ -135,7 +153,7 @@ def _settings_schema(defaults: dict[str, Any]) -> vol.Schema:
             ): _select(
                 [
                     selector.SelectOptionDict(value=value, label=label)
-                    for value, label in NOTIFY_EVENT_OPTIONS.items()
+                    for value, label in _notify_options(hass).items()
                 ],
                 multiple=True,
             ),
@@ -305,7 +323,7 @@ class PackageTrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         return self.async_show_form(
             step_id="settings",
-            data_schema=_settings_schema(_default_options()),
+            data_schema=_settings_schema(_default_options(), self.hass),
             description_placeholders={"account": account},
         )
 
@@ -464,6 +482,12 @@ class PackageTrackerOptionsFlow(config_entries.OptionsFlow):
                     CONF_RETENTION_DAYS: int(
                         user_input.get(CONF_RETENTION_DAYS, DEFAULT_RETENTION_DAYS)
                     ),
+                    CONF_ORDER_PLACEHOLDER_DAYS: int(
+                        user_input.get(
+                            CONF_ORDER_PLACEHOLDER_DAYS,
+                            DEFAULT_ORDER_PLACEHOLDER_DAYS,
+                        )
+                    ),
                     CONF_NOTIFY_SERVICE: str(
                         user_input.get(CONF_NOTIFY_SERVICE) or ""
                     ).strip(),
@@ -513,11 +537,11 @@ class PackageTrackerOptionsFlow(config_entries.OptionsFlow):
                     vol.Required(
                         CONF_SYNC_INTERVAL,
                         default=defaults[CONF_SYNC_INTERVAL],
-                    ): _number_selector(1, 1440, "min"),
+                    ): _number_selector(1, 1440, _unit(self.hass, "min")),
                     vol.Required(
                         CONF_INITIAL_SYNC_DAYS,
                         default=defaults[CONF_INITIAL_SYNC_DAYS],
-                    ): _number_selector(1, 365, "Tage"),
+                    ): _number_selector(1, 365, _unit(self.hass, "days")),
                     vol.Optional(
                         CONF_GMAIL_QUERY, default=defaults[CONF_GMAIL_QUERY]
                     ): selector.TextSelector(
@@ -532,7 +556,14 @@ class PackageTrackerOptionsFlow(config_entries.OptionsFlow):
                     ): cv.boolean,
                     vol.Required(
                         CONF_RETENTION_DAYS, default=defaults[CONF_RETENTION_DAYS]
-                    ): _number_selector(0, 3650, "Tage"),
+                    ): _number_selector(0, 3650, _unit(self.hass, "days")),
+                    vol.Required(
+                        CONF_ORDER_PLACEHOLDER_DAYS,
+                        default=defaults.get(
+                            CONF_ORDER_PLACEHOLDER_DAYS,
+                            DEFAULT_ORDER_PLACEHOLDER_DAYS,
+                        ),
+                    ): _number_selector(0, 90, _unit(self.hass, "days")),
                     vol.Optional(
                         CONF_NOTIFY_SERVICE, default=defaults[CONF_NOTIFY_SERVICE]
                     ): cv.string,
@@ -541,7 +572,7 @@ class PackageTrackerOptionsFlow(config_entries.OptionsFlow):
                     ): _select(
                         [
                             selector.SelectOptionDict(value=value, label=label)
-                            for value, label in NOTIFY_EVENT_OPTIONS.items()
+                            for value, label in _notify_options(self.hass).items()
                         ],
                         multiple=True,
                     ),
@@ -555,11 +586,19 @@ class PackageTrackerOptionsFlow(config_entries.OptionsFlow):
                             ),
                             selector.SelectOptionDict(
                                 value=TRACKING_PROVIDER_DHL,
-                                label="DHL Unified API (offiziell)",
+                                label=(
+                                    "DHL Unified API (offiziell)"
+                                    if _is_german(self.hass)
+                                    else "DHL Unified API (official)"
+                                ),
                             ),
                             selector.SelectOptionDict(
                                 value=TRACKING_PROVIDER_CUSTOM,
-                                label="Eigener JSON-Endpunkt",
+                                label=(
+                                    "Eigener JSON-Endpunkt"
+                                    if _is_german(self.hass)
+                                    else "Custom JSON endpoint"
+                                ),
                             ),
                         ]
                     ),
@@ -573,7 +612,7 @@ class PackageTrackerOptionsFlow(config_entries.OptionsFlow):
                     vol.Required(
                         CONF_TRACKING_INTERVAL,
                         default=defaults[CONF_TRACKING_INTERVAL],
-                    ): _number_selector(0, 1440, "min"),
+                    ): _number_selector(0, 1440, _unit(self.hass, "min")),
                     vol.Optional(
                         CONF_TRACKING_URL, default=defaults[CONF_TRACKING_URL]
                     ): cv.string,
