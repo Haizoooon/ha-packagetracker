@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.5 – 2026-11-27
+
+- Remove stale per-parcel entity registry entries after cleanup so old marketing sensors disappear from the entity list.
+- Keep real tracked parcels but rename them to the localised “Parcel from …” fallback when a bogus product name was detected.
+
 ## 1.0.4 – 2026-11-27
 
 - Marketing, newsletter and service mails such as “Ablageort buchen”, “Angebote shoppen”, “Black Friday Angebote” or “Amazon Haul” are rejected even if they contain a tracking-like number.

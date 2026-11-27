@@ -15,6 +15,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
@@ -363,6 +364,22 @@ async def async_setup_entry(
         return
     coordinator = runtime.coordinator
     known: set[str] = set()
+
+    # Remove registry entries for parcels that were deleted or cleaned up
+    # while the integration was offline (e.g. marketing artifacts from 1.0.x).
+    registry = er.async_get(hass)
+    valid_unique_ids = {
+        package_unique_id(package_id) for package_id in runtime.manager.shipments
+    }
+    for registry_entry in er.async_entries_for_config_entry(
+        registry, entry.entry_id
+    ):
+        if (
+            registry_entry.domain == "sensor"
+            and registry_entry.unique_id.startswith(f"{DOMAIN}_package_")
+            and registry_entry.unique_id not in valid_unique_ids
+        ):
+            registry.async_remove(registry_entry.entity_id)
 
     @callback
     def _add_new_packages() -> None:
