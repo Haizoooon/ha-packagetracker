@@ -1,0 +1,215 @@
+{
+  "config": {
+    "flow_title": "Package Tracker",
+    "step": {
+      "user": {
+        "title": "Gmail verbinden",
+        "description": "Package Tracker liest Bestell- und Versand-E-Mails ausschließlich lokal in Home Assistant aus. Es wird nur lesender Gmail-Zugriff angefordert.\n\nErstelle in der Google Cloud Console einen OAuth-Client vom Typ **Webanwendung**, aktiviere die Gmail API und hinterlege diese Redirect-URI:\n\n`{redirect_uri}`\n\nFüge anschließend Client-ID und Client-Secret hier ein.",
+        "data": {
+          "client_id": "Client-ID",
+          "client_secret": "Client-Secret"
+        }
+      },
+      "settings": {
+        "title": "Synchronisierung",
+        "description": "Gmail-Konto: {account}. Diese Werte lassen sich später in den Optionen ändern.",
+        "data": {
+          "sync_interval": "Synchronisierungsintervall",
+          "initial_sync_days": "Zeitraum für den ersten Import",
+          "notify_service": "Benachrichtigungsdienst (optional)",
+          "notify_events": "Benachrichtigen bei diesen Ereignissen"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Gmail erneut verbinden",
+        "description": "Der Zugriff auf {account} ist abgelaufen oder wurde entzogen. Bitte erneut anmelden.",
+        "data": {}
+      }
+    },
+    "error": {
+      "invalid_credentials": "Bitte Client-ID und Client-Secret eingeben.",
+      "invalid_client_id": "Die Client-ID muss auf .apps.googleusercontent.com enden.",
+      "no_url_available": "Es ist keine öffentliche HTTPS-URL verfügbar. Richte My Home Assistant oder eine externe URL ein und versuche es erneut.",
+      "tracking_api_key_required": "Die DHL Unified API benötigt einen API-Key.",
+      "tracking_url_invalid": "Die Tracking-URL muss den Platzhalter {tracking} enthalten."
+    },
+    "abort": {
+      "already_configured": "Dieses Gmail-Konto ist bereits eingerichtet.",
+      "oauth_denied": "Der Google-Zugriff wurde abgelehnt: {error}",
+      "oauth_failed": "Die Google-Anmeldung konnte nicht abgeschlossen werden.",
+      "missing_scope": "Die lesende Gmail-Berechtigung wurde nicht erteilt. Bitte Zugriff auf Gmail erlauben.",
+      "no_refresh_token": "Google hat kein Refresh-Token geliefert. Entferne den App-Zugriff in deinem Google-Konto und versuche es erneut.",
+      "cannot_connect": "Gmail ist nicht erreichbar.",
+      "no_url_available": "Für die OAuth-Weiterleitung ist eine öffentliche HTTPS-URL erforderlich.",
+      "reauth_failed": "Die erneute Verbindung mit Gmail ist fehlgeschlagen.",
+      "reauth_successful": "Das Gmail-Konto wurde erneut verbunden.",
+      "wrong_account": "Bitte mit demselben Google-Konto anmelden."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Package Tracker Einstellungen",
+        "description": "Synchronisierung, Datenschutz, Benachrichtigungen und optionaler Tracking-Anbieter. Änderungen werden ohne Neustart übernommen.",
+        "data": {
+          "sync_interval": "Synchronisierungsintervall (Minuten)",
+          "initial_sync_days": "Zeitraum für den ersten Import (Tage)",
+          "gmail_query": "Gmail-Suchanfrage",
+          "max_messages_per_sync": "Maximale Nachrichten pro Sync",
+          "store_email_subjects": "E-Mail-Betreffzeilen speichern",
+          "retention_days": "Zugestellte Pakete aufbewahren (Tage, 0 = dauerhaft)",
+          "notify_service": "Benachrichtigungsdienst (z. B. mobile_app_phone)",
+          "notify_events": "Benachrichtigen bei diesen Ereignissen",
+          "tracking_provider": "Tracking-Anbieter",
+          "tracking_api_key": "Tracking-API-Key",
+          "tracking_interval": "Tracking-Intervall (Minuten, 0 = aus)",
+          "tracking_url": "Eigene Tracking-URL-Vorlage",
+          "tracking_header": "Eigener HTTP-Header-Name",
+          "tracking_header_value": "Eigener HTTP-Header-Wert",
+          "tracking_status_path": "JSON-Pfad zum Status",
+          "tracking_expected_path": "JSON-Pfad zum Liefertermin",
+          "tracking_events_path": "JSON-Pfad zu Ereignissen",
+          "tracking_event_time_path": "JSON-Pfad zum Zeitstempel",
+          "tracking_event_text_path": "JSON-Pfad zum Ereignistext"
+        }
+      }
+    },
+    "error": {
+      "tracking_api_key_required": "Die DHL Unified API benötigt einen API-Key.",
+      "tracking_url_invalid": "Die Tracking-URL muss den Platzhalter {tracking} enthalten."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "packages": {
+        "name": "Pakete"
+      },
+      "deliveries_today": {
+        "name": "Lieferungen heute"
+      },
+      "next_delivery": {
+        "name": "Nächste Lieferung"
+      },
+      "delivered_today": {
+        "name": "Heute zugestellt"
+      },
+      "packages_in_transit": {
+        "name": "Pakete unterwegs"
+      },
+      "delayed": {
+        "name": "Verspätete Pakete"
+      },
+      "last_sync": {
+        "name": "Letzte Gmail-Synchronisierung"
+      }
+    },
+    "binary_sensor": {
+      "delivery_today": {
+        "name": "Lieferung heute"
+      },
+      "out_for_delivery": {
+        "name": "Paket in Zustellung"
+      },
+      "delayed": {
+        "name": "Paket verspätet"
+      },
+      "gmail_connected": {
+        "name": "Gmail verbunden"
+      }
+    },
+    "button": {
+      "sync": {
+        "name": "Gmail jetzt synchronisieren"
+      },
+      "refresh_tracking": {
+        "name": "Tracking aktualisieren"
+      }
+    }
+  },
+  "issues": {
+    "auth": {
+      "title": "Gmail-Autorisierung fehlgeschlagen",
+      "description": "Package Tracker kann für {entry} nicht mehr auf Gmail zugreifen. Klicke auf „Beheben“, um dich erneut anzumelden."
+    },
+    "scope": {
+      "title": "Gmail-Leseberechtigung fehlt",
+      "description": "Die lesende Gmail-Berechtigung für {entry} fehlt oder wurde entzogen. Klicke auf „Beheben“, um den Zugriff erneut zu erteilen."
+    },
+    "storage_corrupt": {
+      "title": "Package Tracker Daten konnten nicht gelesen werden",
+      "description": "Die gespeicherten Paketdaten für {entry} waren unlesbar. Eventuell wurde eine Sicherung neben der Speicherdatei abgelegt. Package Tracker startet mit einem leeren Datenbestand; neue E-Mails werden erneut importiert."
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "package_found": "Paket erkannt",
+      "package_ordered": "Paket bestellt",
+      "package_shipped": "Paket versendet",
+      "package_in_transit": "Paket unterwegs",
+      "package_out_for_delivery": "Paket in Zustellung",
+      "package_delivered": "Paket zugestellt",
+      "package_delayed": "Paket verspätet",
+      "package_ready_for_pickup": "Paket abholbereit",
+      "package_returned": "Paket retourniert",
+      "package_cancelled": "Bestellung storniert",
+      "package_status_changed": "Paketstatus geändert"
+    },
+    "condition_type": {
+      "package_status": "Paket hat Status",
+      "carrier_is": "Paketdienst ist",
+      "merchant_is": "Händler ist",
+      "product_contains": "Produkt enthält",
+      "delivery_today": "Für heute wird eine Lieferung erwartet",
+      "package_exists": "Ein Paket existiert"
+    },
+    "action_type": {
+      "sync": "Gmail jetzt synchronisieren",
+      "refresh_tracking": "Tracking aktualisieren",
+      "mark_delivered": "Paket als zugestellt markieren",
+      "mark_completed": "Paket als erledigt markieren",
+      "delete_package": "Paket löschen"
+    }
+  },
+  "services": {
+    "sync": {
+      "name": "Gmail synchronisieren",
+      "description": "Neue Bestell- und Versand-E-Mails sofort abrufen."
+    },
+    "refresh_tracking": {
+      "name": "Tracking aktualisieren",
+      "description": "Den optionalen externen Tracking-Anbieter für ein oder alle Pakete abfragen."
+    },
+    "mark_delivered": {
+      "name": "Als zugestellt markieren",
+      "description": "Ein Paket manuell auf zugestellt setzen."
+    },
+    "mark_completed": {
+      "name": "Als erledigt markieren",
+      "description": "Ein Paket aus der aktiven Übersicht ausblenden, ohne es zu löschen."
+    },
+    "update_package": {
+      "name": "Paket aktualisieren",
+      "description": "Händler, Produkt, Paketdienst, Sendungsnummer, Termine oder Status korrigieren."
+    },
+    "delete_package": {
+      "name": "Paket löschen",
+      "description": "Ein Paket und seine Historie dauerhaft löschen."
+    },
+    "delete_all_data": {
+      "name": "Alle Paketdaten löschen",
+      "description": "Alle lokal gespeicherten Pakete und Bestellungen löschen. Erfordert confirm: true."
+    },
+    "disconnect_account": {
+      "name": "Gmail-Konto trennen",
+      "description": "Config-Eintrag entfernen, Google-Token widerrufen und alle lokalen Paketdaten löschen."
+    },
+    "get_packages": {
+      "name": "Pakete abrufen",
+      "description": "Die gemeinsame Paketliste für Skripte und Templates zurückgeben."
+    },
+    "refresh": {
+      "name": "Paketübersicht aktualisieren",
+      "description": "Die Übersicht aus den gespeicherten Paketdaten neu aufbauen und das Dashboard aktualisieren."
+    }
+  }
+}

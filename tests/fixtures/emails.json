@@ -1,0 +1,137 @@
+[
+  {
+    "key": "amazon_order",
+    "sender_name": "Amazon.de",
+    "sender_email": "bestellung@amazon.de",
+    "subject": "Ihre Amazon.de Bestellung von Logitech MX Master 4",
+    "received_at": "2026-11-20T09:15:00+00:00",
+    "text": "Hallo Max,\n\nvielen Dank für deine Bestellung. Wir haben deine Bestellung erhalten.\n\nArtikel: Logitech MX Master 4 kabellose Maus\nMenge: 1\nArtikel: Anker USB-C Kabel 2m\nMenge: 2\n\nBestellnummer: 302-1234567-8901234\nVoraussichtliche Lieferung: 27. November 2026\n\nViele Grüße\nDein Amazon.de Team",
+    "html": "<html><head><meta property=\"og:image\" content=\"https://m.media-amazon.com/images/I/61mxmaster.jpg\"></head><body><h1>Hallo Max,</h1><p>vielen Dank für deine Bestellung. Wir haben deine Bestellung erhalten.</p><table><tr><td><a href=\"https://www.amazon.de/dp/B0ABCDEF12\"><img src=\"https://m.media-amazon.com/images/I/61mxmaster.jpg\" alt=\"Logitech MX Master 4 kabellose Maus\" width=\"160\" height=\"160\"></a></td><td><a href=\"https://www.amazon.de/dp/B0ABCDEF12\">Logitech MX Master 4 kabellose Maus</a></td><td>1</td></tr><tr><td><a href=\"https://www.amazon.de/dp/B0XYZ12345\">Anker USB-C Kabel 2m</a></td><td>2</td></tr></table><p>Bestellnummer: 302-1234567-8901234</p><p>Voraussichtliche Lieferung: 27. November 2026</p></body></html>"
+  },
+  {
+    "key": "amazon_shipping",
+    "sender_name": "Amazon.de",
+    "sender_email": "versand@amazon.de",
+    "subject": "Ihr Paket mit „Logitech MX Master 4“ wurde versendet",
+    "received_at": "2026-11-22T10:30:00+00:00",
+    "text": "Guten Tag,\n\ndein Paket wurde versendet.\n\nArtikel: Logitech MX Master 4 kabellose Maus\nBestellnummer: 302-1234567-8901234\nSendungsnummer: 00340434161094000000\nVoraussichtliche Zustellung: 27.11.2026\nZustellung zwischen 14:00 und 18:00 Uhr.\n\nPaketdienst: DHL\nViele Grüße\nAmazon.de",
+    "html": "<html><body><p>Guten Tag, dein Paket wurde versendet.</p><p>Artikel: Logitech MX Master 4 kabellose Maus</p><p>Bestellnummer: 302-1234567-8901234</p><p>Sendungsnummer: 00340434161094000000</p><a href=\"https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=00340434161094000000\">Sendung verfolgen</a><img src=\"https://m.media-amazon.com/images/I/61mxmaster.jpg\" alt=\"Logitech MX Master 4\" width=\"180\" height=\"180\"></body></html>"
+  },
+  {
+    "key": "dhl_out_for_delivery",
+    "sender_name": "DHL",
+    "sender_email": "noreply@dhl.de",
+    "subject": "Ihre Sendung ist in Zustellung",
+    "received_at": "2026-11-26T07:05:00+00:00",
+    "text": "Guten Morgen,\n\nIhre Sendung mit der Nummer 00340434161094000000 ist in Zustellung und wird heute zwischen 14:00 und 18:00 Uhr zugestellt.\n\nMit freundlichen Grüßen\nDHL",
+    "html": "<html><body><h2>Ihre Sendung ist in Zustellung</h2><p>Ihre Sendung mit der Nummer <strong>00340434161094000000</strong> ist in Zustellung und wird heute zwischen 14:00 und 18:00 Uhr zugestellt.</p><a href=\"https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=00340434161094000000\">Sendung verfolgen</a></body></html>"
+  },
+  {
+    "key": "dhl_delivered",
+    "sender_name": "DHL",
+    "sender_email": "noreply@dhl.de",
+    "subject": "Ihre Sendung wurde zugestellt",
+    "received_at": "2026-11-26T15:20:00+00:00",
+    "text": "Guten Tag,\n\nIhre Sendung 00340434161094000000 wurde am 26.11.2026 erfolgreich zugestellt.\n\nMit freundlichen Grüßen\nDHL",
+    "html": "<html><body><p>Ihre Sendung <strong>00340434161094000000</strong> wurde am 26.11.2026 erfolgreich zugestellt.</p></body></html>"
+  },
+  {
+    "key": "hermes_delay",
+    "sender_name": "Hermes Germany",
+    "sender_email": "service@myhermes.de",
+    "subject": "Verzögerung bei Ihrer Sendung",
+    "received_at": "2026-11-24T08:10:00+00:00",
+    "text": "Guten Tag,\n\nleider kommt es zu Verzögerungen bei der Zustellung Ihrer Sendung. Die neue voraussichtliche Zustellung ist am 28.11.2026.\n\nSendungsnummer: 01234567890123\n\nIhr Hermes Team",
+    "html": "<html><body><p>leider kommt es zu Verzögerungen bei der Zustellung Ihrer Sendung.</p><p>Die neue voraussichtliche Zustellung ist am 28.11.2026.</p><p>Sendungsnummer: 01234567890123</p><p>Ihr Hermes Team</p></body></html>"
+  },
+  {
+    "key": "dpd_shipping",
+    "sender_name": "DPD",
+    "sender_email": "versand@dpd.de",
+    "subject": "Ihr DPD Paket ist unterwegs",
+    "received_at": "2026-11-21T10:00:00+00:00",
+    "text": "Guten Tag,\n\nIhr Paket von MediaMarkt ist unterwegs.\n\nArtikel: Samsung SSD 990 Pro 2TB\nBestellnummer: DPD-998877\nSendungsnummer: 09876543210987\nVoraussichtliche Zustellung: 25.11.2026\n\nDPD",
+    "html": "<html><body><p>Ihr Paket von MediaMarkt ist unterwegs.</p><p>Sendungsnummer: 09876543210987</p><a href=\"https://tracking.dpd.de/status/de_DE/parcel/09876543210987\">Paket verfolgen</a></body></html>"
+  },
+  {
+    "key": "dpd_pickup",
+    "sender_name": "DPD",
+    "sender_email": "noreply@dpd.de",
+    "subject": "Ihre Sendung liegt abholbereit",
+    "received_at": "2026-11-25T08:00:00+00:00",
+    "text": "Guten Tag,\n\nIhre Sendung mit der Sendungsnummer 09876543210987 liegt abholbereit in der Packstation 123. Bitte holen Sie die Sendung bis zum 30.11.2026 ab.\n\nDPD",
+    "html": "<html><body><p>Ihre Sendung mit der Sendungsnummer <strong>09876543210987</strong> liegt abholbereit in der Packstation 123.</p></body></html>"
+  },
+  {
+    "key": "ups_shipped",
+    "sender_name": "UPS",
+    "sender_email": "mcinfo@ups.com",
+    "subject": "Ihr Cyberport Paket wurde versendet",
+    "received_at": "2026-11-21T11:00:00+00:00",
+    "text": "Guten Tag,\n\nIhr Paket von Cyberport wurde versendet.\n\nArtikel: Logitech G Pro X Superlight 2\nBestellnummer: CY-2026-4455\nSendungsnummer: 1Z999AA10123456784\nVoraussichtliche Zustellung: 29.11.2026\n\nUPS",
+    "html": "<html><body><p>Ihr Paket von Cyberport wurde versendet.</p><p>Sendungsnummer: 1Z999AA10123456784</p><a href=\"https://www.ups.com/track?tracknum=1Z999AA10123456784\">Track</a></body></html>"
+  },
+  {
+    "key": "amazon_logistics",
+    "sender_name": "Amazon.de",
+    "sender_email": "shipment-tracking@amazon.de",
+    "subject": "Dein Paket ist in Zustellung",
+    "received_at": "2026-11-26T06:45:00+00:00",
+    "text": "Guten Morgen,\n\ndein Paket mit der Sendungsnummer TBA123456789012 ist in Zustellung und wird heute zugestellt.\nBestellnummer: 302-1234567-8901234\n\nViele Grüße\nAmazon.de",
+    "html": "<html><body><p>Dein Paket mit der Sendungsnummer <strong>TBA123456789012</strong> ist in Zustellung und wird heute zugestellt.</p></body></html>"
+  },
+  {
+    "key": "return_label",
+    "sender_name": "Amazon.de",
+    "sender_email": "retoure@amazon.de",
+    "subject": "Dein Retourenlabel für deine Bestellung",
+    "received_at": "2026-11-23T12:00:00+00:00",
+    "text": "Hallo,\n\nhier ist dein Retourenlabel für deine Bestellung.\nBestellnummer: 302-1234567-8901234\n\nDrucke das Retourenlabel aus und gib das Paket bei der Post ab.\n\nAmazon.de",
+    "html": "<html><body><p>hier ist dein Retourenlabel für deine Bestellung.</p><p>Bestellnummer: 302-1234567-8901234</p></body></html>"
+  },
+  {
+    "key": "gls_return",
+    "sender_name": "GLS Germany",
+    "sender_email": "noreply@gls-group.eu",
+    "subject": "Ihre Sendung wurde zurückgeschickt",
+    "received_at": "2026-11-24T14:00:00+00:00",
+    "text": "Guten Tag,\n\nIhre Sendung 12345678901234 wurde an den Absender zurückgeschickt.\n\nGLS",
+    "html": "<html><body><p>Ihre Sendung <strong>12345678901234</strong> wurde an den Absender zurückgeschickt.</p></body></html>"
+  },
+  {
+    "key": "marketing",
+    "sender_name": "Amazon.de",
+    "sender_email": "angebote@amazon.de",
+    "subject": "Neue Angebote für dich",
+    "received_at": "2026-11-24T18:00:00+00:00",
+    "text": "Entdecke unsere neuen Angebote. Jetzt kaufen und sparen. Mehr erfahren in der App. Angebote gültig bis 30.11.2026.",
+    "html": "<html><body><h1>Neue Angebote</h1><a href=\"https://www.amazon.de/deals\">Jetzt kaufen</a><img src=\"https://m.media-amazon.com/images/G/logo.png\" width=\"1\" height=\"1\"></body></html>"
+  },
+  {
+    "key": "malformed",
+    "sender_name": "Amazon.de",
+    "sender_email": "versand@amazon.de",
+    "subject": "Ihr Paket wurde versendet",
+    "received_at": "2026-11-22T12:00:00+00:00",
+    "text": "",
+    "html": "<html><body><p>Ihr Paket wurde versendet. Sendungsnummer: 00340434161094000000<div><a href=\"https://www.amazon.de/dp/B0ABCDEF12\">Logitech MX Master 4"
+  },
+  {
+    "key": "deutsche_post_shipped",
+    "sender_name": "Deutsche Post",
+    "sender_email": "noreply@deutschepost.de",
+    "subject": "Ihre Sendung wurde versendet",
+    "received_at": "2026-11-22T09:00:00+00:00",
+    "text": "Guten Tag,\n\nIhre Sendung wurde versendet.\n\nSendungsnummer: RR123456789DE\nVoraussichtliche Zustellung: 30.11.2026\n\nDeutsche Post",
+    "html": "<html><body><p>Ihre Sendung wurde versendet.</p><p>Sendungsnummer: RR123456789DE</p></body></html>"
+  },
+  {
+    "key": "fedex_delivered",
+    "sender_name": "FedEx",
+    "sender_email": "tracking@fedex.com",
+    "subject": "Your package was delivered",
+    "received_at": "2026-11-26T16:00:00+00:00",
+    "text": "Your shipment 123456789012 was delivered on 2026-11-26.\n\nTracking number: 123456789012\n\nFedEx",
+    "html": "<html><body><p>Your shipment <strong>123456789012</strong> was delivered on 2026-11-26.</p></body></html>"
+  }
+]

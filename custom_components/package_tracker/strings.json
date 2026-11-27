@@ -1,0 +1,215 @@
+{
+  "config": {
+    "flow_title": "Package Tracker",
+    "step": {
+      "user": {
+        "title": "Connect Gmail",
+        "description": "Package Tracker reads shipping and order e-mails locally in Home Assistant. It only requests read-only Gmail access.\n\nCreate an OAuth client of type **Web application** in the Google Cloud Console, enable the Gmail API and register this redirect URI:\n\n`{redirect_uri}`\n\nThen paste the client ID and client secret here.",
+        "data": {
+          "client_id": "Client ID",
+          "client_secret": "Client secret"
+        }
+      },
+      "settings": {
+        "title": "Sync settings",
+        "description": "Gmail account: {account}. These values can be changed later in the integration options.",
+        "data": {
+          "sync_interval": "Sync interval",
+          "initial_sync_days": "Initial import period",
+          "notify_service": "Notification service (optional)",
+          "notify_events": "Notify for these events"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconnect Gmail",
+        "description": "The access to {account} has expired or was revoked. Please sign in again.",
+        "data": {}
+      }
+    },
+    "error": {
+      "invalid_credentials": "Please enter both client ID and client secret.",
+      "invalid_client_id": "The client ID must end with .apps.googleusercontent.com.",
+      "no_url_available": "No public HTTPS URL is available. Set up My Home Assistant or an external URL and try again.",
+      "tracking_api_key_required": "The DHL Unified API requires an API key.",
+      "tracking_url_invalid": "The tracking URL must contain the placeholder {tracking}."
+    },
+    "abort": {
+      "already_configured": "This Gmail account is already configured.",
+      "oauth_denied": "Google access was denied: {error}",
+      "oauth_failed": "The Google sign-in could not be completed.",
+      "missing_scope": "The read-only Gmail permission was not granted. Please allow access to Gmail.",
+      "no_refresh_token": "Google did not return a refresh token. Remove the app's access in your Google account and try again.",
+      "cannot_connect": "Gmail could not be reached.",
+      "no_url_available": "A public HTTPS URL is required for the OAuth redirect.",
+      "reauth_failed": "Reconnecting the Gmail account failed.",
+      "reauth_successful": "The Gmail account was reconnected.",
+      "wrong_account": "Please sign in with the same Google account."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Package Tracker settings",
+        "description": "Sync, privacy, notifications and optional tracking provider. Changing options is applied without restarting Home Assistant.",
+        "data": {
+          "sync_interval": "Sync interval (minutes)",
+          "initial_sync_days": "Initial import period (days)",
+          "gmail_query": "Gmail search query",
+          "max_messages_per_sync": "Maximum messages per sync",
+          "store_email_subjects": "Store e-mail subjects",
+          "retention_days": "Keep delivered packages for (days, 0 = forever)",
+          "notify_service": "Notification service (e.g. mobile_app_phone)",
+          "notify_events": "Notify for these events",
+          "tracking_provider": "Tracking provider",
+          "tracking_api_key": "Tracking API key",
+          "tracking_interval": "Tracking refresh interval (minutes, 0 = off)",
+          "tracking_url": "Custom tracking URL template",
+          "tracking_header": "Custom HTTP header name",
+          "tracking_header_value": "Custom HTTP header value",
+          "tracking_status_path": "JSON path to status",
+          "tracking_expected_path": "JSON path to expected delivery",
+          "tracking_events_path": "JSON path to events",
+          "tracking_event_time_path": "JSON path to event timestamp",
+          "tracking_event_text_path": "JSON path to event text"
+        }
+      }
+    },
+    "error": {
+      "tracking_api_key_required": "The DHL Unified API requires an API key.",
+      "tracking_url_invalid": "The tracking URL must contain the placeholder {tracking}."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "packages": {
+        "name": "Packages"
+      },
+      "deliveries_today": {
+        "name": "Deliveries today"
+      },
+      "next_delivery": {
+        "name": "Next delivery"
+      },
+      "delivered_today": {
+        "name": "Delivered today"
+      },
+      "packages_in_transit": {
+        "name": "Packages in transit"
+      },
+      "delayed": {
+        "name": "Delayed packages"
+      },
+      "last_sync": {
+        "name": "Last Gmail sync"
+      }
+    },
+    "binary_sensor": {
+      "delivery_today": {
+        "name": "Delivery today"
+      },
+      "out_for_delivery": {
+        "name": "Package out for delivery"
+      },
+      "delayed": {
+        "name": "Delayed package"
+      },
+      "gmail_connected": {
+        "name": "Gmail connected"
+      }
+    },
+    "button": {
+      "sync": {
+        "name": "Sync Gmail now"
+      },
+      "refresh_tracking": {
+        "name": "Refresh tracking"
+      }
+    }
+  },
+  "issues": {
+    "auth": {
+      "title": "Gmail authorization failed",
+      "description": "Package Tracker can no longer access Gmail for {entry}. Click \"Fix\" to sign in again."
+    },
+    "scope": {
+      "title": "Gmail read permission missing",
+      "description": "The read-only Gmail permission for {entry} is missing or was revoked. Click \"Fix\" to grant access again."
+    },
+    "storage_corrupt": {
+      "title": "Package Tracker data could not be read",
+      "description": "The saved package data for {entry} was unreadable. A backup may have been created next to the storage file. Package Tracker started with an empty data set; new e-mails will be imported again."
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "package_found": "Package detected",
+      "package_ordered": "Package ordered",
+      "package_shipped": "Package shipped",
+      "package_in_transit": "Package in transit",
+      "package_out_for_delivery": "Package out for delivery",
+      "package_delivered": "Package delivered",
+      "package_delayed": "Package delayed",
+      "package_ready_for_pickup": "Package ready for pickup",
+      "package_returned": "Package returned",
+      "package_cancelled": "Order cancelled",
+      "package_status_changed": "Package status changed"
+    },
+    "condition_type": {
+      "package_status": "Package has status",
+      "carrier_is": "Carrier is",
+      "merchant_is": "Merchant is",
+      "product_contains": "Product contains",
+      "delivery_today": "A delivery is expected today",
+      "package_exists": "A package exists"
+    },
+    "action_type": {
+      "sync": "Sync Gmail now",
+      "refresh_tracking": "Refresh tracking",
+      "mark_delivered": "Mark package as delivered",
+      "mark_completed": "Mark package as completed",
+      "delete_package": "Delete package"
+    }
+  },
+  "services": {
+    "sync": {
+      "name": "Sync Gmail",
+      "description": "Fetch new order and shipping e-mails immediately."
+    },
+    "refresh_tracking": {
+      "name": "Refresh tracking",
+      "description": "Query the optional external tracking provider for one or all packages."
+    },
+    "mark_delivered": {
+      "name": "Mark as delivered",
+      "description": "Set a package to delivered manually."
+    },
+    "mark_completed": {
+      "name": "Mark as completed",
+      "description": "Hide a package from the active overview without deleting it."
+    },
+    "update_package": {
+      "name": "Update package",
+      "description": "Correct merchant, product, carrier, tracking number, dates or status."
+    },
+    "delete_package": {
+      "name": "Delete package",
+      "description": "Delete one package and its history permanently."
+    },
+    "delete_all_data": {
+      "name": "Delete all package data",
+      "description": "Delete all locally stored packages and orders. Requires confirm: true."
+    },
+    "disconnect_account": {
+      "name": "Disconnect Gmail account",
+      "description": "Remove the config entry, revoke the Google token and delete all local package data."
+    },
+    "get_packages": {
+      "name": "Get packages",
+      "description": "Return the shared package list for use in scripts and templates."
+    },
+    "refresh": {
+      "name": "Refresh package overview",
+      "description": "Rebuild the overview from the stored package data and notify the dashboard."
+    }
+  }
+}

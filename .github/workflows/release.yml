@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify manifest version matches tag
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          version = json.loads(pathlib.Path("custom_components/package_tracker/manifest.json").read_text())["version"]
+          tag = os.environ["GITHUB_REF_NAME"].lstrip("v")
+          if version != tag:
+              raise SystemExit(f"manifest version {version} != tag {tag}")
+          print("Version", version)
+          PY
+      - name: Build integration archive
+        run: |
+          rm -f package_tracker.zip
+          zip -r package_tracker.zip custom_components/package_tracker \
+            -x "*/__pycache__/*" "*.pyc" "*.pyo"
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: package_tracker.zip
+          generate_release_notes: true
+          body: |
+            Package Tracker release. Install through HACS or copy
+            `custom_components/package_tracker` into your Home Assistant
+            configuration directory.

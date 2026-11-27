@@ -1,0 +1,14 @@
+{
+  "domain": "package_tracker",
+  "name": "Package Tracker",
+  "codeowners": ["@maxhellwig"],
+  "config_flow": true,
+  "dependencies": ["http", "websocket_api"],
+  "after_dependencies": ["frontend"],
+  "documentation": "https://github.com/maxhellwig/package-tracker",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/maxhellwig/package-tracker/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

@@ -1,0 +1,209 @@
+sync:
+  translation_key: sync
+  description: Fetch new order and shipping e-mails immediately.
+  fields:
+    config_entry_id:
+      description: Optional config entry ID when more than one Gmail account is configured.
+      example: 01J8Z3F4K5M6N7P8Q9R0S1T2U3
+      selector:
+        text:
+
+refresh:
+  translation_key: refresh
+  description: Rebuild the package overview and publish a fresh snapshot to the dashboard.
+  fields:
+    config_entry_id:
+      description: Optional config entry ID.
+      selector:
+        text:
+
+refresh_tracking:
+  translation_key: refresh_tracking
+  description: Query the optional external tracking provider.
+  fields:
+    package_id:
+      description: Refresh only this package. Omit to refresh all due packages.
+      selector:
+        text:
+    config_entry_id:
+      description: Optional config entry ID.
+      selector:
+        text:
+
+mark_delivered:
+  translation_key: mark_delivered
+  description: Mark a package as delivered manually.
+  fields:
+    package_id:
+      description: The stable Package Tracker package ID.
+      required: true
+      selector:
+        text:
+    delivered_at:
+      description: Delivery date (defaults to today).
+      selector:
+        date:
+    config_entry_id:
+      description: Optional config entry ID.
+      selector:
+        text:
+
+mark_completed:
+  translation_key: mark_completed
+  description: Hide a package from the active overview without deleting it.
+  fields:
+    package_id:
+      description: The stable Package Tracker package ID.
+      required: true
+      selector:
+        text:
+    completed:
+      description: True to mark as completed, false to reactivate.
+      default: true
+      selector:
+        boolean:
+    config_entry_id:
+      description: Optional config entry ID.
+      selector:
+        text:
+
+update_package:
+  translation_key: update_package
+  description: Correct package details or set the status manually.
+  fields:
+    package_id:
+      description: The stable Package Tracker package ID.
+      required: true
+      selector:
+        text:
+    merchant:
+      description: Merchant name.
+      selector:
+        text:
+    product_name:
+      description: Product name.
+      selector:
+        text:
+    carrier:
+      description: Carrier key or name (dhl, deutsche_post, hermes, dpd, gls, ups, fedex, amazon_logistics).
+      selector:
+        text:
+    tracking_number:
+      description: Tracking number.
+      selector:
+        text:
+    order_number:
+      description: Merchant order number.
+      selector:
+        text:
+    expected_delivery:
+      description: Expected delivery date.
+      selector:
+        date:
+    delivery_window:
+      description: Delivery time window, for example 14:00–18:00 Uhr.
+      selector:
+        text:
+    status:
+      description: Manual status override.
+      selector:
+        select:
+          options:
+            - ordered
+            - shipped
+            - in_transit
+            - out_for_delivery
+            - delivered
+            - delayed
+            - ready_for_pickup
+            - returned
+            - cancelled
+            - unknown
+    notes:
+      description: Free text note.
+      selector:
+        text:
+          multiline: true
+    completed:
+      description: Whether the package is marked as completed.
+      selector:
+        boolean:
+    config_entry_id:
+      description: Optional config entry ID.
+      selector:
+        text:
+
+delete_package:
+  translation_key: delete_package
+  description: Delete one package and its history permanently.
+  fields:
+    package_id:
+      description: The stable Package Tracker package ID.
+      required: true
+      selector:
+        text:
+    config_entry_id:
+      description: Optional config entry ID.
+      selector:
+        text:
+
+delete_all_data:
+  translation_key: delete_all_data
+  description: Delete all locally stored package data. Requires confirm true.
+  fields:
+    confirm:
+      description: Must be true to execute the deletion.
+      required: true
+      selector:
+        boolean:
+    reset_sync:
+      description: Also reset the Gmail watermark so older e-mails are imported again.
+      default: false
+      selector:
+        boolean:
+    config_entry_id:
+      description: Optional config entry ID. Omit to delete data of all accounts.
+      selector:
+        text:
+
+disconnect_account:
+  translation_key: disconnect_account
+  description: Remove the config entry, revoke the Google token and delete local data.
+  fields:
+    config_entry_id:
+      description: Config entry ID to disconnect. Required when multiple accounts exist.
+      selector:
+        text:
+
+get_packages:
+  translation_key: get_packages
+  description: Return the shared package list as a service response.
+  fields:
+    status:
+      description: Only return packages with this status.
+      selector:
+        select:
+          options:
+            - ordered
+            - shipped
+            - in_transit
+            - out_for_delivery
+            - delivered
+            - delayed
+            - ready_for_pickup
+            - returned
+            - cancelled
+            - unknown
+    merchant:
+      description: Only return packages whose merchant contains this text.
+      selector:
+        text:
+    include_completed:
+      description: Include packages marked as completed.
+      default: true
+      selector:
+        boolean:
+    config_entry_id:
+      description: Optional config entry ID.
+      selector:
+        text:

@@ -1,0 +1,10 @@
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+extend-exclude = ["custom_components/package_tracker/frontend"]
+
+[tool.ruff.lint]
+# Deliberate readability choices in the parser/manager:
+# nested guards make the heuristic rules easier to audit than combined
+# conditions, and malformed HTML may safely be ignored without a log entry.
+ignore = ["SIM102", "S110"]
