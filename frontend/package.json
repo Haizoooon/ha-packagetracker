@@ -1,6 +1,6 @@
 {
   "name": "package-tracker-card",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Home Assistant Lovelace card for Package Tracker",
   "type": "module",

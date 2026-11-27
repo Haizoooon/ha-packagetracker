@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.2 – 2026-11-27
+
+- Fixed hassfest/HACS manifest key ordering.
+- Added integration category and removed unsupported service translation keys.
+- Added GitHub repository description/topics and brand assets for HACS/Marketplace.
+- English-first documentation with German README translation.
+
 ## 1.0.1 – 2026-11-27
 
 - Invoice, review, newsletter and coupon e-mails containing an order number are no longer treated as parcels.

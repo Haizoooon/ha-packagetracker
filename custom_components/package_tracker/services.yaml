@@ -1,5 +1,4 @@
 sync:
-  translation_key: sync
   description: Fetch new order and shipping e-mails immediately.
   fields:
     config_entry_id:
@@ -9,7 +8,6 @@ sync:
         text:
 
 refresh:
-  translation_key: refresh
   description: Rebuild the package overview and publish a fresh snapshot to the dashboard.
   fields:
     config_entry_id:
@@ -18,7 +16,6 @@ refresh:
         text:
 
 refresh_tracking:
-  translation_key: refresh_tracking
   description: Query the optional external tracking provider.
   fields:
     package_id:
@@ -31,7 +28,6 @@ refresh_tracking:
         text:
 
 mark_delivered:
-  translation_key: mark_delivered
   description: Mark a package as delivered manually.
   fields:
     package_id:
@@ -49,7 +45,6 @@ mark_delivered:
         text:
 
 mark_completed:
-  translation_key: mark_completed
   description: Hide a package from the active overview without deleting it.
   fields:
     package_id:
@@ -68,7 +63,6 @@ mark_completed:
         text:
 
 update_package:
-  translation_key: update_package
   description: Correct package details or set the status manually.
   fields:
     package_id:
@@ -134,7 +128,6 @@ update_package:
         text:
 
 delete_package:
-  translation_key: delete_package
   description: Delete one package and its history permanently.
   fields:
     package_id:
@@ -148,7 +141,6 @@ delete_package:
         text:
 
 delete_all_data:
-  translation_key: delete_all_data
   description: Delete all locally stored package data. Requires confirm true.
   fields:
     confirm:
@@ -167,7 +159,6 @@ delete_all_data:
         text:
 
 disconnect_account:
-  translation_key: disconnect_account
   description: Remove the config entry, revoke the Google token and delete local data.
   fields:
     config_entry_id:
@@ -176,7 +167,6 @@ disconnect_account:
         text:
 
 get_packages:
-  translation_key: get_packages
   description: Return the shared package list as a service response.
   fields:
     status:
